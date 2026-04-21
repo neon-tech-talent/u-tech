@@ -41,8 +41,19 @@ export default async function EventDetail({ params }: { params: { id: string } }
 
             <div className="max-w-4xl mx-auto mt-10 p-6 md:p-0">
                 <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-                    <div className="h-64 bg-slate-200 flex items-center justify-center text-slate-400">
-                        BANNER DEL EVENTO
+                    <div className="h-[400px] bg-slate-200 relative overflow-hidden group">
+                        {event.banner_url ? (
+                            <img
+                                src={event.banner_url}
+                                alt={event.name}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-black text-4xl uppercase tracking-tighter opacity-20">
+                                {event.name}
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     </div>
 
                     <div className="p-8 md:p-12">

@@ -89,6 +89,19 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
 
     return (
         <div className="space-y-8">
+            {event.venue_map_url && (
+                <div className="bg-white rounded-[32px] overflow-hidden border border-slate-100 mb-8 aspect-video relative group">
+                    <img
+                        src={event.venue_map_url}
+                        alt="Mapa del Local"
+                        className="w-full h-full object-contain bg-slate-50 transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        Mapa del Establecimiento
+                    </div>
+                </div>
+            )}
+
             {event.location_type !== 'GENERAL' && (
                 <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 space-y-6">
                     <div className="flex items-center gap-2 mb-2">
@@ -102,12 +115,18 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                             <select
                                 className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
                                 value={selectedSection}
-                                onChange={(e) => { setSelectedSection(e.target.value); setSelectedRow(""); setSelectedSeat(""); }}
+                                onChange={(e) => {
+                                    setSelectedSection(e.target.value);
+                                    setSelectedRow("");
+                                    setSelectedSeat("");
+                                    setCart({}); // Clear cart when changing section to avoid conflicts
+                                }}
                             >
                                 <option value="">Seleccionar...</option>
                                 {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
+                        {/* ... existing row/seat selects ... */}
 
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Fila</label>
@@ -139,37 +158,46 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
             )}
 
             <div className="divide-y divide-slate-100">
-                {ticketTypes.map((type) => (
-                    <div key={type.id} className="py-6 flex items-center justify-between">
-                        <div className="space-y-1">
-                            <h4 className="font-bold text-slate-800 text-lg">{type.name}</h4>
-                            <p className="text-slate-500">{formatCurrency(type.price)}</p>
-                            {type.stock < 10 && (
-                                <p className="text-orange-500 text-xs font-medium">¡Solo quedan {type.stock}!</p>
-                            )}
-                        </div>
+                {ticketTypes
+                    .filter(type => {
+                        if (event.location_type === 'GENERAL') return true;
+                        const section = sections.find(s => s.id === selectedSection);
+                        return section && type.name.toLowerCase().includes(section.name.toLowerCase());
+                    })
+                    .map((type) => (
+                        <div key={type.id} className="py-6 flex items-center justify-between">
+                            <div className="space-y-1">
+                                <h4 className="font-bold text-slate-800 text-lg">{type.name}</h4>
+                                <p className="text-slate-500">{formatCurrency(type.price)}</p>
+                                {type.stock < 10 && (
+                                    <p className="text-orange-500 text-xs font-medium">¡Solo quedan {type.stock}!</p>
+                                )}
+                            </div>
 
-                        <div className="flex items-center gap-4 bg-slate-100 p-2 rounded-xl">
-                            <button
-                                onClick={() => handleUpdateQuantity(type.id, -1, type.stock)}
-                                className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
-                                disabled={!cart[type.id]}
-                            >
-                                <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="w-8 text-center font-bold text-slate-800">
-                                {cart[type.id] || 0}
-                            </span>
-                            <button
-                                onClick={() => handleUpdateQuantity(type.id, 1, type.stock)}
-                                className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
-                                disabled={(cart[type.id] || 0) >= type.stock || (event.location_type !== 'GENERAL' && totalItems >= 1)}
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-4 bg-slate-100 p-2 rounded-xl">
+                                <button
+                                    onClick={() => handleUpdateQuantity(type.id, -1, type.stock)}
+                                    className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
+                                    disabled={!cart[type.id]}
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="w-8 text-center font-bold text-slate-800">
+                                    {cart[type.id] || 0}
+                                </span>
+                                <button
+                                    onClick={() => handleUpdateQuantity(type.id, 1, type.stock)}
+                                    className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
+                                    disabled={(cart[type.id] || 0) >= type.stock || (event.location_type !== 'GENERAL' && (totalItems >= 1 || !selectedSeat))}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                {event.location_type !== 'GENERAL' && !selectedSection && (
+                    <p className="text-slate-400 italic py-6 text-center">Selecciona un sector para ver los precios...</p>
+                )}
             </div>
 
             {(totalItems > 0 && (event.location_type === 'GENERAL' || selectedSeat)) && (
