@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatDate } from "@/lib/utils";
-import { Calendar, MapPin, User, Edit3, Clock, CheckCircle2, X } from "lucide-react";
+import { Calendar, MapPin, User, Edit3, Clock, CheckCircle2, X, Ticket } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAfter, subHours } from "date-fns";
 
