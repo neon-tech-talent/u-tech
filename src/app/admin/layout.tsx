@@ -1,7 +1,20 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, Calendar, Scan, Settings, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+
+    const navItems = [
+        { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+        { href: "/admin/events", icon: Calendar, label: "Eventos" },
+        { href: "/admin/scanner", icon: Scan, label: "Escanear QR" },
+        { href: "/admin/settings", icon: Settings, label: "Configuración" },
+    ];
+
     return (
         <div className="flex min-h-screen bg-slate-100">
             {/* Sidebar */}
@@ -11,22 +24,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2">
-                    <Link href="/admin" className="flex items-center gap-3 p-4 rounded-xl hover:bg-white/10 transition-colors">
-                        <LayoutDashboard className="w-5 h-5 text-slate-400" />
-                        <span className="font-bold">Dashboard</span>
-                    </Link>
-                    <Link href="/admin/events" className="flex items-center gap-3 p-4 rounded-xl hover:bg-white/10 transition-colors">
-                        <Calendar className="w-5 h-5 text-slate-400" />
-                        <span className="font-bold">Eventos</span>
-                    </Link>
-                    <Link href="/admin/scanner" className="flex items-center gap-3 p-4 rounded-xl bg-blue-600 text-white">
-                        <Scan className="w-5 h-5" />
-                        <span className="font-bold">Escanear QR</span>
-                    </Link>
-                    <Link href="/admin/settings" className="flex items-center gap-3 p-4 rounded-xl hover:bg-white/10 transition-colors text-slate-400">
-                        <Settings className="w-5 h-5" />
-                        <span className="font-bold text-sm">Configuración</span>
-                    </Link>
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    "flex items-center gap-3 p-4 rounded-xl transition-all duration-200",
+                                    isActive
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                )}
+                            >
+                                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-500")} />
+                                <span className="font-bold">{item.label}</span>
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 <div className="p-4 mt-auto border-t border-white/5">
