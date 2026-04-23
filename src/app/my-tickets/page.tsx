@@ -1,29 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Ticket, Calendar, MapPin, User, Edit3, Clock } from "lucide-react";
+import { Ticket } from "lucide-react";
 import Link from "next/link";
 import TicketList from "@/components/TicketList";
 
-export const dynamic = "force-dynamic";
+export default function MyTicketsPage() {
+    const [user, setUser] = useState<any>(null);
+    const [tickets, setTickets] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-export default async function MyTicketsPage() {
-    // In a real app we'd filter by auth.uid(). 
-    // For MVP we'll show all tickets or mock a session.
-    const { data: tickets, error } = await supabase
-        .from("tickets")
-        .select(`
-      *, 
-      events (
-        name, 
-        event_date, 
-        location_name,
-        companies (name, brand_color)
-      )
-    `)
-        .order("created_at", { ascending: false });
+    useEffect(() => {
+        const fetchUserAndTickets = async () => {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (error) return <div className="p-10">Error: {error.message}</div>;
+            if (authError || !user) {
+                setLoading(false);
+                return;
+            }
+
+            setUser(user);
+
+            const { data: ticketsData, error } = await supabase
+                .from("tickets")
+                .select(`
+                  *, 
+                  events (
+                    name, 
+                    event_date, 
+                    location_name,
+                    companies (name, brand_color)
+                  ),
+                  orders!inner(user_id)
+                `)
+                .eq("orders.user_id", user.id)
+                .order("created_at", { ascending: false });
+
+            if (!error && ticketsData) {
+                setTickets(ticketsData);
+            }
+            setLoading(false);
+        };
+
+        fetchUserAndTickets();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                <Ticket className="w-16 h-16 text-slate-300 mb-6" />
+                <h1 className="text-3xl font-black text-slate-900 mb-2">Inicia Sesión</h1>
+                <p className="text-slate-500 mb-6 font-medium">Debes iniciar sesión para ver tus entradas compradas.</p>
+                <Link href="/login" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                    Ir a Iniciar Sesión
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">

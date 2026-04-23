@@ -20,18 +20,26 @@ export default function Home() {
                     Scalable, multitenant y segura.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                     <Link
                         href="/events"
-                        className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-all group"
+                        className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-all group flex flex-col"
                     >
                         <h2 className="text-xl font-bold text-slate-800 group-hover:text-blue-600">Explorar Eventos &rarr;</h2>
                         <p className="text-slate-500 mt-2">Busca y compra tickets para tus eventos favoritos.</p>
                     </Link>
 
                     <Link
+                        href="/my-tickets"
+                        className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-all group flex flex-col"
+                    >
+                        <h2 className="text-xl font-bold text-slate-800 group-hover:text-blue-600">Mis Eventos &rarr;</h2>
+                        <p className="text-slate-500 mt-2">Inicia sesión para ver tus entradas y códigos QR.</p>
+                    </Link>
+
+                    <Link
                         href="/admin"
-                        className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-all group"
+                        className="p-6 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-all group flex flex-col"
                     >
                         <h2 className="text-xl font-bold text-slate-800 group-hover:text-blue-600">Panel de Empresa &rarr;</h2>
                         <p className="text-slate-500 mt-2">Gestiona tus eventos, stock y ventas en tiempo real.</p>
