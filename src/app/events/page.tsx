@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import { Calendar, MapPin, Ticket, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import FeaturedCarousel from "@/components/FeaturedCarousel";
 
 export default function EventsPage() {
     const [events, setEvents] = useState<any[]>([]);
@@ -18,7 +19,7 @@ export default function EventsPage() {
     async function fetchEvents() {
         const { data, error } = await supabase
             .from("events")
-            .select("*")
+            .select("*, companies(name)")
             .neq("status", "DELETED")
             .order("event_date", { ascending: true });
 
@@ -27,6 +28,8 @@ export default function EventsPage() {
         }
         setLoading(false);
     }
+
+    const featuredEvents = events.filter(e => e.is_featured && e.status !== 'CANCELLED');
 
     const filteredEvents = events.filter(event =>
         event.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,6 +44,13 @@ export default function EventsPage() {
                     <h1 className="text-5xl font-black text-slate-900 tracking-tight">Eventos Disponibles</h1>
                     <p className="text-xl text-slate-500 max-w-2xl">Descubre experiencias únicas de nuestras empresas aliadas y reserva tu lugar hoy mismo.</p>
                 </div>
+
+                {/* Featured Carousel */}
+                {featuredEvents.length > 0 && !search && (
+                    <div className="pt-4">
+                        <FeaturedCarousel events={featuredEvents} />
+                    </div>
+                )}
 
                 {/* Search Bar */}
                 <div className="relative max-w-xl group">

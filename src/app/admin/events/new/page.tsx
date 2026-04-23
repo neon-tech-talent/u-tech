@@ -36,6 +36,7 @@ export default function NewEvent() {
 
     const [openingTime, setOpeningTime] = useState("");
     const [address, setAddress] = useState("");
+    const [isFeatured, setIsFeatured] = useState(false);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [venueMapFile, setVenueMapFile] = useState<File | null>(null);
 
@@ -87,6 +88,7 @@ export default function NewEvent() {
                     location_type: locationType,
                     banner_url: finalBannerUrl,
                     venue_map_url: finalVenueMapUrl,
+                    is_featured: isFeatured,
                     total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
                 })
                 .select()
@@ -183,6 +185,23 @@ export default function NewEvent() {
                                 onChange={(e) => setDate(e.target.value)}
                             />
                         </div>
+                    </div>
+
+                    {/* Featured Event Checkbox */}
+                    <div className="flex items-center gap-3 p-6 bg-blue-50 rounded-3xl border border-blue-100 group transition-all hover:border-blue-200">
+                        <div className="relative flex items-center justify-center">
+                            <input
+                                type="checkbox"
+                                id="is_featured"
+                                className="w-6 h-6 rounded-lg border-2 border-blue-200 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer accent-blue-600"
+                                checked={isFeatured}
+                                onChange={(e) => setIsFeatured(e.target.checked)}
+                            />
+                        </div>
+                        <label htmlFor="is_featured" className="flex flex-col cursor-pointer select-none">
+                            <span className="text-sm font-black text-blue-900 tracking-tight">Marcar como Evento Importante</span>
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Este evento aparecerá en el carrusel de inicio</span>
+                        </label>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-50 pt-8">
