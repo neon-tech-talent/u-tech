@@ -33,11 +33,45 @@ export default function NewEvent() {
         setSections(newSections);
     };
 
+    const [openingTime, setOpeningTime] = useState("");
+    const [address, setAddress] = useState("");
+    const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [venueMapFile, setVenueMapFile] = useState<File | null>(null);
+
+    const handleUpload = async (file: File, path: string) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${path}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('event-assets')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('event-assets')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
+            let finalBannerUrl = bannerUrl;
+            let finalVenueMapUrl = venueMapUrl;
+
+            // Upload files if present
+            if (bannerFile) {
+                finalBannerUrl = await handleUpload(bannerFile, 'banners');
+            }
+            if (venueMapFile) {
+                finalVenueMapUrl = await handleUpload(venueMapFile, 'maps');
+            }
+
             // 1. Create Event
             const { data: event, error: eventError } = await supabase
                 .from("events")
@@ -46,10 +80,12 @@ export default function NewEvent() {
                     name,
                     description,
                     event_date: new Date(date).toISOString(),
+                    opening_time: openingTime,
+                    address,
                     location_name: locationName,
                     location_type: locationType,
-                    banner_url: bannerUrl,
-                    venue_map_url: venueMapUrl,
+                    banner_url: finalBannerUrl,
+                    venue_map_url: finalVenueMapUrl,
                     total_capacity: locationType === 'GENERAL' ? 1000 : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
                 })
                 .select()
@@ -148,34 +184,95 @@ export default function NewEvent() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-50 pt-8">
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">URL Banner del Evento</label>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Dirección del Local</label>
                             <input
-                                type="url"
-                                placeholder="https://..."
-                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-medium"
-                                value={bannerUrl}
-                                onChange={(e) => setBannerUrl(e.target.value)}
+                                type="text"
+                                required
+                                placeholder="Av. Corrientes 1234, CABA"
+                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">URL Mapa del Local</label>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Hora de Apertura</label>
                             <input
-                                type="url"
-                                placeholder="https://..."
-                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-medium"
-                                value={venueMapUrl}
-                                onChange={(e) => setVenueMapUrl(e.target.value)}
+                                type="text"
+                                placeholder="Ej: 19:30 hs"
+                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
+                                value={openingTime}
+                                onChange={(e) => setOpeningTime(e.target.value)}
                             />
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">Banner del Evento</label>
+                            <div className="space-y-3">
+                                <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-blue-300 transition-colors relative group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+                                    />
+                                    <div className="text-center">
+                                        <p className="text-xs font-bold text-slate-500">
+                                            {bannerFile ? bannerFile.name : "Seleccionar imagen local..."}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <span className="text-[10px] font-black text-slate-300 uppercase absolute -top-2 left-4 bg-white px-2">O URL</span>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        className="w-full px-6 py-3 rounded-2xl bg-slate-50 border-none outline-none ring-1 ring-slate-200 focus:ring-blue-600 transition-all text-sm"
+                                        value={bannerUrl}
+                                        onChange={(e) => setBannerUrl(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">Mapa del Local</label>
+                            <div className="space-y-3">
+                                <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-blue-300 transition-colors relative group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={(e) => setVenueMapFile(e.target.files?.[0] || null)}
+                                    />
+                                    <div className="text-center">
+                                        <p className="text-xs font-bold text-slate-500">
+                                            {venueMapFile ? venueMapFile.name : "Seleccionar imagen local..."}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <span className="text-[10px] font-black text-slate-300 uppercase absolute -top-2 left-4 bg-white px-2">O URL</span>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        className="w-full px-6 py-3 rounded-2xl bg-slate-50 border-none outline-none ring-1 ring-slate-200 focus:ring-blue-600 transition-all text-sm"
+                                        value={venueMapUrl}
+                                        onChange={(e) => setVenueMapUrl(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Ubicación (Nombre del Recinto)</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Nombre del Recinto / Lugar</label>
                         <input
                             type="text"
                             required
+                            placeholder="Estadio Obras, Luna Park, etc."
                             className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
                             value={locationName}
                             onChange={(e) => setLocationName(e.target.value)}

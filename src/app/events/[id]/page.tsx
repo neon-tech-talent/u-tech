@@ -73,9 +73,14 @@ export default async function EventDetail({ params }: { params: { id: string } }
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 text-blue-600">
                                         <Calendar className="w-5 h-5" />
-                                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Fecha del Evento</span>
+                                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Fecha y Hora</span>
                                     </div>
                                     <p className="text-2xl font-bold text-slate-900">{formatDate(event.event_date)}</p>
+                                    {event.opening_time && (
+                                        <p className="text-sm text-slate-500 font-bold uppercase tracking-wider">
+                                            Apertura: <span className="text-slate-900">{event.opening_time}</span>
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 text-blue-600">
@@ -83,6 +88,11 @@ export default async function EventDetail({ params }: { params: { id: string } }
                                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">Lugar</span>
                                     </div>
                                     <p className="text-2xl font-bold text-slate-900 leading-tight">{event.location_name}</p>
+                                    {event.address && (
+                                        <p className="text-sm text-slate-500 font-medium">
+                                            {event.address}
+                                        </p>
+                                    )}
                                     <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-widest italic">{event.location_type}</span>
                                 </div>
                             </div>

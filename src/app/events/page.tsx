@@ -70,7 +70,14 @@ export default async function EventsPage() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <MapPin className="w-5 h-5 text-blue-600" />
-                                            <span className="line-clamp-1">{event.location_name}</span>
+                                            <div className="flex flex-col">
+                                                <span className="line-clamp-1">{event.location_name}</span>
+                                                {event.address && (
+                                                    <span className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                                                        {event.address}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
