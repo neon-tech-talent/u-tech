@@ -17,6 +17,7 @@ export default function NewEvent() {
     const [bannerUrl, setBannerUrl] = useState("");
     const [venueMapUrl, setVenueMapUrl] = useState("");
     const [generalPrice, setGeneralPrice] = useState(0);
+    const [generalCapacity, setGeneralCapacity] = useState(1000);
     const [sections, setSections] = useState<{ name: string; rows: number; seatsPerRow: number; price: number }[]>([]);
 
     const handleAddSection = () => {
@@ -86,7 +87,7 @@ export default function NewEvent() {
                     location_type: locationType,
                     banner_url: finalBannerUrl,
                     venue_map_url: finalVenueMapUrl,
-                    total_capacity: locationType === 'GENERAL' ? 1000 : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
+                    total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
                 })
                 .select()
                 .single();
@@ -99,7 +100,7 @@ export default function NewEvent() {
                     event_id: event.id,
                     name: "Entrada General",
                     price: generalPrice,
-                    stock: 1000
+                    stock: generalCapacity
                 });
             } else {
                 for (const sectionData of sections) {
@@ -210,7 +211,10 @@ export default function NewEvent() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">Banner del Evento</label>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600 flex justify-between items-center">
+                                <span>Banner del Evento</span>
+                                <span className="text-[10px] font-medium lowercase italic text-slate-400">Recomendado: 1280x720px (16:9)</span>
+                            </label>
                             <div className="space-y-3">
                                 <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-blue-300 transition-colors relative group">
                                     <input
@@ -238,7 +242,10 @@ export default function NewEvent() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">Mapa del Local</label>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600 flex justify-between items-center">
+                                <span>Mapa del Local</span>
+                                <span className="text-[10px] font-medium lowercase italic text-slate-400">Recomendado: 800x800px (1:1)</span>
+                            </label>
                             <div className="space-y-3">
                                 <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-blue-300 transition-colors relative group">
                                     <input
@@ -309,16 +316,28 @@ export default function NewEvent() {
                     </div>
 
                     {locationType === 'GENERAL' && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Precio Entrada General</label>
-                            <div className="relative">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">$</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Precio Entrada General</label>
+                                <div className="relative">
+                                    <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">$</span>
+                                    <input
+                                        type="number"
+                                        required
+                                        className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
+                                        value={generalPrice}
+                                        onChange={(e) => setGeneralPrice(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Cantidad de Entradas</label>
                                 <input
                                     type="number"
                                     required
-                                    className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
-                                    value={generalPrice}
-                                    onChange={(e) => setGeneralPrice(parseFloat(e.target.value))}
+                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold"
+                                    value={generalCapacity}
+                                    onChange={(e) => setGeneralCapacity(parseInt(e.target.value))}
                                 />
                             </div>
                         </div>

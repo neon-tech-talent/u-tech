@@ -36,6 +36,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     const [cart, setCart] = useState<Record<string, number>>({});
     const [sections, setSections] = useState<Section[]>([]);
     const [seats, setSeats] = useState<Seat[]>([]);
+    const [soldCounts, setSoldCounts] = useState<Record<string, number>>({});
 
     const [selectedSection, setSelectedSection] = useState<string>("");
     const [selectedRow, setSelectedRow] = useState<string>("");
@@ -47,7 +48,23 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
         if (event.location_type !== 'GENERAL') {
             fetchSeatingData();
         }
-    }, [event.id]);
+        fetchSoldCounts();
+    }, [event.id, ticketTypes]);
+
+    const fetchSoldCounts = async () => {
+        if (ticketTypes.length === 0) return;
+        const { data: soldTickets } = await supabase
+            .from("tickets")
+            .select("ticket_type_id")
+            .in("ticket_type_id", ticketTypes.map(t => t.id))
+            .eq("status", "VALID");
+
+        const counts = soldTickets?.reduce((acc: any, t) => {
+            acc[t.ticket_type_id] = (acc[t.ticket_type_id] || 0) + 1;
+            return acc;
+        }, {}) || {};
+        setSoldCounts(counts);
+    };
 
     const fetchSeatingData = async () => {
         const { data: sectionsData } = await supabase.from("sections").select("*").eq("event_id", event.id);
@@ -126,7 +143,6 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                 {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
-                        {/* ... existing row/seat selects ... */}
 
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Fila</label>
@@ -166,37 +182,54 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                         if (!section || !section.name || !type.name) return false;
                         return type.name.toLowerCase().includes(section.name.toLowerCase());
                     })
-                    .map((type) => (
-                        <div key={type.id} className="py-6 flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h4 className="font-bold text-slate-800 text-lg">{type.name}</h4>
-                                <p className="text-slate-500">{formatCurrency(type.price)}</p>
-                                {type.stock < 10 && (
-                                    <p className="text-orange-500 text-xs font-medium">¡Solo quedan {type.stock}!</p>
-                                )}
-                            </div>
+                    .map((type) => {
+                        const sold = soldCounts[type.id] || 0;
+                        const remaining = type.stock - sold;
+                        const isSoldOut = remaining <= 0;
+                        const isLowStock = remaining > 0 && remaining < type.stock * 0.1;
 
-                            <div className="flex items-center gap-4 bg-slate-100 p-2 rounded-xl">
-                                <button
-                                    onClick={() => handleUpdateQuantity(type.id, -1, type.stock)}
-                                    className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
-                                    disabled={!cart[type.id]}
-                                >
-                                    <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center font-bold text-slate-800">
-                                    {cart[type.id] || 0}
-                                </span>
-                                <button
-                                    onClick={() => handleUpdateQuantity(type.id, 1, type.stock)}
-                                    className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
-                                    disabled={(cart[type.id] || 0) >= type.stock || (event.location_type !== 'GENERAL' && (totalItems >= 1 || !selectedSeat))}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </button>
+                        return (
+                            <div key={type.id} className="py-6 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-slate-800 text-lg">{type.name}</h4>
+                                    <p className="text-slate-500">{formatCurrency(type.price)}</p>
+                                    {isSoldOut ? (
+                                        <span className="inline-block px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">
+                                            AGOTADO
+                                        </span>
+                                    ) : isLowStock ? (
+                                        <p className="text-orange-600 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                            ¡Pocas entradas! Quedan {remaining}
+                                        </p>
+                                    ) : (
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                            {remaining} disponibles
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className={`flex items-center gap-4 bg-slate-100 p-2 rounded-xl transition-opacity ${isSoldOut ? 'opacity-30 pointer-events-none' : ''}`}>
+                                    <button
+                                        onClick={() => handleUpdateQuantity(type.id, -1, remaining)}
+                                        className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
+                                        disabled={!cart[type.id]}
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                    <span className="w-8 text-center font-bold text-slate-800">
+                                        {cart[type.id] || 0}
+                                    </span>
+                                    <button
+                                        onClick={() => handleUpdateQuantity(type.id, 1, remaining)}
+                                        className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
+                                        disabled={(cart[type.id] || 0) >= remaining || (event.location_type !== 'GENERAL' && (totalItems >= 1 || !selectedSeat))}
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 {event.location_type !== 'GENERAL' && !selectedSection && (
                     <p className="text-slate-400 italic py-6 text-center">Selecciona un sector para ver los precios...</p>
                 )}
