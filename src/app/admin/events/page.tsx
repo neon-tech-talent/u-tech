@@ -1,15 +1,65 @@
+"use client";
+
 import { supabase } from "@/lib/supabase";
-import { Plus, Calendar, Settings, MapPin, MoreVertical } from "lucide-react";
+import { Plus, Calendar, Settings, MapPin, MoreVertical, Trash2, Ban, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export default function AdminEvents() {
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-export default async function AdminEvents() {
-    const { data: events } = await supabase
-        .from("events")
-        .select("*, ticket_types(count)")
-        .order("event_date", { ascending: false });
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    async function fetchEvents() {
+        const { data, error } = await supabase
+            .from("events")
+            .select("*, ticket_types(count)")
+            .neq("status", "DELETED")
+            .order("event_date", { ascending: false });
+
+        if (!error && data) {
+            setEvents(data);
+        }
+        setLoading(false);
+    }
+
+    async function handleStatusChange(eventId: string, newStatus: string) {
+        const actionLabel = newStatus === 'CANCELLED' ? 'cancelar' : 'activar';
+        if (!confirm(`¿Estás seguro de que deseas ${actionLabel} este evento?`)) return;
+
+        const { error } = await supabase
+            .from("events")
+            .update({ status: newStatus })
+            .eq("id", eventId);
+
+        if (error) {
+            alert("Error al cambiar estado: " + error.message);
+        } else {
+            fetchEvents();
+        }
+    }
+
+    async function handleDelete(eventId: string) {
+        if (!confirm("¿ESTÁS SEGURO? Esta acción no se puede deshacer y ocultará el evento permanentemente.")) return;
+
+        // Soft delete
+        const { error } = await supabase
+            .from("events")
+            .update({ status: 'DELETED' })
+            .eq("id", eventId);
+
+        if (error) {
+            alert("Error al eliminar: " + error.message);
+        } else {
+            setEvents(events.filter(e => e.id !== eventId));
+        }
+    }
 
     return (
         <div className="space-y-10">
@@ -33,34 +83,63 @@ export default async function AdminEvents() {
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Evento</th>
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ubicación</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {events?.map((event) => (
-                            <tr key={event.id} className="hover:bg-slate-50 transition-colors group">
+                        {loading ? (
+                            <tr>
+                                <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold animate-pulse uppercase tracking-widest">
+                                    Cargando eventos...
+                                </td>
+                            </tr>
+                        ) : events.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold uppercase tracking-widest">
+                                    No tienes eventos creados
+                                </td>
+                            </tr>
+                        ) : events.map((event) => (
+                            <tr key={event.id} className={`hover:bg-slate-50 transition-colors group ${event.status === 'CANCELLED' ? 'bg-red-50/30' : ''}`}>
                                 <td className="px-8 py-6">
                                     <div className="font-bold text-slate-900">{event.name}</div>
-                                    <div className="text-xs text-slate-400 mt-1">{event.id.slice(0, 8)}</div>
+                                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                                        <MapPin className="w-3 h-3" />
+                                        {event.location_name}
+                                    </div>
                                 </td>
                                 <td className="px-8 py-6 text-sm text-slate-600 font-medium">
                                     {formatDate(event.event_date)}
                                 </td>
-                                <td className="px-8 py-6 text-sm text-slate-600 font-medium flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-slate-300" />
-                                    {event.location_name}
-                                </td>
                                 <td className="px-8 py-6">
-                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                                        {event.location_type}
+                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${event.status === 'CANCELLED'
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-green-100 text-green-600'
+                                        }`}>
+                                        {event.status === 'CANCELLED' ? 'CANCELADO' : 'ACTIVO'}
                                     </span>
                                 </td>
-                                <td className="px-8 py-6 text-right">
-                                    <button className="p-2 text-slate-300 hover:text-slate-900 transition-colors">
-                                        <MoreVertical className="w-5 h-5" />
-                                    </button>
+                                <td className="px-8 py-6">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={() => handleStatusChange(event.id, event.status === 'CANCELLED' ? 'ACTIVE' : 'CANCELLED')}
+                                            className={`p-2 rounded-xl transition-all ${event.status === 'CANCELLED'
+                                                    ? 'text-green-600 hover:bg-green-50'
+                                                    : 'text-orange-600 hover:bg-orange-50'
+                                                }`}
+                                            title={event.status === 'CANCELLED' ? "Reactivar Evento" : "Cancelar Evento"}
+                                        >
+                                            {event.status === 'CANCELLED' ? <CheckCircle className="w-5 h-5" /> : <Ban className="w-5 h-5" />}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(event.id)}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                            title="Eliminar Evento"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

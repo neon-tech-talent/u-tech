@@ -1,25 +1,48 @@
+"use client";
+
 import { supabase } from "@/lib/supabase";
 import { formatDate } from "@/lib/utils";
-import { Calendar, MapPin, Ticket, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Ticket, ArrowLeft, Ban } from "lucide-react";
 import Link from "next/link";
 import TicketSelection from "@/components/TicketSelection";
+import { useEffect, useState } from "react";
 
-export const dynamic = "force-dynamic";
+export default function EventDetail({ params }: { params: { id: string } }) {
+    const [event, setEvent] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-export default async function EventDetail({ params }: { params: { id: string } }) {
-    const { data: event, error: eventError } = await supabase
-        .from("events")
-        .select("*, companies(*), ticket_types(price), sections(*)")
-        .eq("id", params.id)
-        .single();
+    useEffect(() => {
+        fetchEvent();
+    }, [params.id]);
 
-    if (eventError || !event) {
-        return <div className="p-10 text-red-500 text-center">Error cargando el evento: {eventError?.message || "No encontrado"}</div>;
+    async function fetchEvent() {
+        const { data, error } = await supabase
+            .from("events")
+            .select("*, companies(*), ticket_types(*), sections(*)")
+            .eq("id", params.id)
+            .single();
+
+        if (!error && data) {
+            setEvent(data);
+        }
+        setLoading(false);
+    }
+
+    if (loading) {
+        return <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="text-slate-400 font-bold animate-pulse uppercase tracking-[0.3em]">Cargando evento...</div>
+        </div>;
+    }
+
+    if (!event) {
+        return <div className="p-10 text-red-500 text-center">No se encontró el evento.</div>;
     }
 
     const minPrice = event.ticket_types?.length > 0
         ? Math.min(...event.ticket_types.map((t: any) => t.price))
         : null;
+
+    const isCancelled = event.status === 'CANCELLED';
 
     const brandStyle = {
         "--primary-color": event.companies?.brand_color || "#0f172a",
@@ -41,13 +64,20 @@ export default async function EventDetail({ params }: { params: { id: string } }
                 </div>
             </header>
 
+            {isCancelled && (
+                <div className="bg-red-600 text-white py-4 text-center sticky top-16 z-40 shadow-lg flex items-center justify-center gap-4">
+                    <Ban className="w-6 h-6" />
+                    <span className="font-black uppercase tracking-[0.2em] text-sm">Este evento ha sido CANCELADO por el organizador</span>
+                </div>
+            )}
+
             {/* Banner Hero */}
             <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-slate-900 group">
                 {event.banner_url ? (
                     <img
                         src={event.banner_url}
                         alt={event.name}
-                        className="w-full h-full object-cover opacity-70 transition-transform duration-1000 group-hover:scale-105"
+                        className={`w-full h-full object-cover opacity-70 transition-transform duration-1000 group-hover:scale-105 ${isCancelled ? 'grayscale brightness-50' : ''}`}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
@@ -109,39 +139,49 @@ export default async function EventDetail({ params }: { params: { id: string } }
                     {/* SELECT SIDE (RIGHT) */}
                     <div className="lg:col-span-5 space-y-8">
                         {/* Summary Card */}
-                        <div className="bg-slate-900 rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden group">
+                        <div className={`bg-slate-900 rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden group ${isCancelled ? 'grayscale' : ''}`}>
                             <div className="relative z-10 space-y-8">
-                                {minPrice !== null ? (
+                                {!isCancelled && minPrice !== null ? (
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Tickets disponibles desde</p>
                                         <p className="text-7xl font-black tracking-tighter leading-none">${minPrice.toLocaleString()}</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
-                                        <p className="text-2xl font-black uppercase tracking-tighter">Próximamente</p>
-                                        <p className="text-slate-500 text-sm">Tickets no disponibles por el momento.</p>
+                                        <p className="text-2xl font-black uppercase tracking-tighter">
+                                            {isCancelled ? "VENTA CERRADA" : "Próximamente"}
+                                        </p>
+                                        <p className="text-slate-500 text-sm">
+                                            {isCancelled ? "Este evento no admite compras." : "Tickets no disponibles por el momento."}
+                                        </p>
                                     </div>
                                 )}
 
                                 <div className="pt-4 flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest border-t border-white/5">
-                                    <div className="flex -space-x-2">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800" />
-                                        ))}
-                                    </div>
-                                    <span>+50 personas interesadas</span>
+                                    {!isCancelled && (
+                                        <>
+                                            <div className="flex -space-x-2">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800" />
+                                                ))}
+                                            </div>
+                                            <span>+50 personas interesadas</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <Ticket className="absolute -right-12 -bottom-12 w-48 h-48 text-white/5 -rotate-12 transition-transform duration-700 group-hover:scale-110" />
                         </div>
 
                         {/* Ticket Selection Component */}
-                        <div className="bg-white rounded-[40px] p-2 shadow-xl shadow-slate-200/50 border border-slate-100">
-                            <TicketSelection
-                                event={event}
-                                ticketTypes={event.ticket_types || []}
-                            />
-                        </div>
+                        {!isCancelled && (
+                            <div className="bg-white rounded-[40px] p-2 shadow-xl shadow-slate-200/50 border border-slate-100">
+                                <TicketSelection
+                                    event={event}
+                                    ticketTypes={event.ticket_types || []}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
