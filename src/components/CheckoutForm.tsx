@@ -58,11 +58,15 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
         }
 
         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Debes iniciar sesión para comprar.");
+
             // 1. Create order
             const { data: order, error: orderError } = await supabase
                 .from("orders")
                 .insert({
                     company_id: event.company_id,
+                    user_id: user.id,
                     total_amount: ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0),
                     status: 'COMPLETED', // Simulating successful payment for MVP
                     expires_at: new Date(Date.now() + 5 * 60000).toISOString()
@@ -98,7 +102,18 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
                     .eq("id", seatId);
             }
 
-            // 3. Success!
+            // 3. Success! Triger email sending (optional but recommended for UX)
+            if (user?.email) {
+                // We don't await this to avoid delaying the success page, or we could await it
+                fetch("/api/send-ticket", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        orderId: order.id,
+                        email: user.email
+                    })
+                }).catch(err => console.error("Error triggering email:", err));
+            }
+
             router.push(`/checkout/success?orderId=${order.id}`);
         } catch (err: any) {
             setError(err.message || "Ocurrió un error al procesar tu compra.");
