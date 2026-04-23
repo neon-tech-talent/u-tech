@@ -161,8 +161,10 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                 {ticketTypes
                     .filter(type => {
                         if (event.location_type === 'GENERAL') return true;
+                        if (!selectedSection) return false;
                         const section = sections.find(s => s.id === selectedSection);
-                        return section && type.name.toLowerCase().includes(section.name.toLowerCase());
+                        if (!section || !section.name || !type.name) return false;
+                        return type.name.toLowerCase().includes(section.name.toLowerCase());
                     })
                     .map((type) => (
                         <div key={type.id} className="py-6 flex items-center justify-between">
