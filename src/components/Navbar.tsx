@@ -59,15 +59,13 @@ export default function Navbar() {
                 <div className="flex items-center gap-4">
                     {session ? (
                         <>
-                            {role === 'CUSTOMER' && (
-                                <Link
-                                    href="/my-tickets"
-                                    className="hidden md:flex flex-col items-center justify-center p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                >
-                                    <Ticket className="w-5 h-5 mb-1" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Mis Tickets</span>
-                                </Link>
-                            )}
+                            <Link
+                                href="/my-tickets"
+                                className="hidden md:flex flex-col items-center justify-center p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                                <Ticket className="w-5 h-5 mb-1" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Mis Tickets</span>
+                            </Link>
 
                             {(role === 'ADMIN' || role === 'SUPERADMIN') && (
                                 <Link
