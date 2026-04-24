@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { supabase } from "@/lib/supabase";
-import { ScanFace, CheckCircle2, XCircle, AlertTriangle, RefreshCcw } from "lucide-react";
+import { ScanFace, CheckCircle2, XCircle, AlertTriangle, RefreshCcw, Ticket } from "lucide-react";
 
 type ScanResult = null | "success" | "used" | "invalid";
 
