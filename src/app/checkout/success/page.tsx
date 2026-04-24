@@ -53,10 +53,14 @@ export default async function SuccessPage({ searchParams }: { searchParams: { or
                         Ver Mis Tickets
                         <ArrowRight className="w-4 h-4" />
                     </Link>
-                    <button className="w-full bg-white text-slate-600 py-4 rounded-xl font-bold border border-slate-200 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                    <Link
+                        href={`/checkout/receipt/${searchParams.orderId}`}
+                        target="_blank"
+                        className="w-full bg-white text-slate-600 py-4 rounded-xl font-bold border border-slate-200 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+                    >
                         <Download className="w-4 h-4" />
                         Descargar Comprobante
-                    </button>
+                    </Link>
                 </div>
 
                 <p className="text-xs text-slate-400">
