@@ -1,130 +1,198 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Script from "next/script";
 import { supabase } from "@/lib/supabase";
-import { Scan, CheckCircle, XCircle, Loader2, User } from "lucide-react";
+import { ScanFace, CheckCircle2, XCircle, AlertTriangle, RefreshCcw } from "lucide-react";
 
-export default function QRScanner() {
-    const [qrInput, setQrInput] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<{ success: boolean; message: string; ticket?: any } | null>(null);
+type ScanResult = null | "success" | "used" | "invalid";
 
-    const handleScan = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setResult(null);
+export default function TicketScanner() {
+    const [scanResult, setScanResult] = useState<ScanResult>(null);
+    const [ticketData, setTicketData] = useState<any>(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scannerInstance, setScannerInstance] = useState<any>(null);
+
+    // Function called by the Html5QrcodeScanner when a QR is read
+    const handleScanSuccess = async (decodedText: string) => {
+        if (!isScanning) return; // Prevent multiple reads
+        setIsScanning(false);
+
+        // Pause scanner if possible
+        if (scannerInstance) {
+            scannerInstance.pause(true);
+        }
 
         try {
-            // 1. Check if ticket exists
-            const { data: ticket, error: fetchError } = await supabase
+            // Verify token in DB
+            const { data, error } = await supabase
                 .from("tickets")
-                .select("*, events(name)")
-                .eq("qr_code", qrInput)
+                .select("*, ticket_types(name)")
+                .eq("qr_code", decodedText)
                 .single();
 
-            if (fetchError || !ticket) {
-                setResult({ success: false, message: "Ticket INVÁLIDO o no encontrado." });
+            if (error || !data) {
+                setScanResult("invalid");
                 return;
             }
 
-            // 2. Check if already used
-            if (ticket.status === 'USED') {
-                setResult({ success: false, message: "Este ticket YA FUE USADO.", ticket });
-                return;
+            setTicketData(data);
+
+            if (data.status === "USED") {
+                setScanResult("used");
+            } else if (data.status === "VALID") {
+                // Update to used
+                const { error: updateError } = await supabase
+                    .from("tickets")
+                    .update({ status: "USED" })
+                    .eq("id", data.id);
+
+                if (updateError) {
+                    console.error("Error updating ticket", updateError);
+                    alert("Error al actualizar la entrada en la base de datos.");
+                    return;
+                }
+                setScanResult("success");
+            } else {
+                setScanResult("invalid");
             }
-
-            // 3. Mark as used
-            const { error: updateError } = await supabase
-                .from("tickets")
-                .update({ status: 'USED' })
-                .eq("id", ticket.id);
-
-            if (updateError) throw updateError;
-
-            setResult({
-                success: true,
-                message: "¡Acceso PERMITIDO! Ticket validado correctamente.",
-                ticket
-            });
-            setQrInput("");
         } catch (err) {
-            setResult({ success: false, message: "Error técnico al validar." });
-        } finally {
-            setLoading(false);
+            console.error(err);
+            setScanResult("invalid");
+        }
+    };
+
+    const initializeScanner = () => {
+        if (typeof window !== "undefined" && (window as any).Html5QrcodeScanner) {
+            // Cleanup previous if exists
+            if (scannerInstance) {
+                scannerInstance.clear().catch(console.error);
+            }
+
+            const html5QrcodeScanner = new (window as any).Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                false
+            );
+
+            setScannerInstance(html5QrcodeScanner);
+            setIsScanning(true);
+
+            html5QrcodeScanner.render(
+                (text: string) => handleScanSuccess(text),
+                (errorMessage: any) => { /* Ignore background scan errors */ }
+            );
+        }
+    };
+
+    const resumeScanning = () => {
+        setScanResult(null);
+        setTicketData(null);
+        setIsScanning(true);
+        if (scannerInstance) {
+            scannerInstance.resume();
+        } else {
+            initializeScanner();
         }
     };
 
     return (
-        <div className="max-w-2xl mx-auto space-y-10">
-            <header className="text-center">
-                <div className="bg-blue-600 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-blue-100 text-white">
-                    <Scan className="w-8 h-8" />
-                </div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">Validador de Acceso</h1>
-                <p className="text-slate-500 font-medium">Ingresa el código QR o escanea el ticket del asistente.</p>
+        <div className="max-w-2xl mx-auto space-y-6">
+            <Script
+                src="https://unpkg.com/html5-qrcode"
+                strategy="lazyOnload"
+                onLoad={initializeScanner}
+            />
+
+            <header className="mb-8">
+                <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
+                    <ScanFace className="w-8 h-8 text-blue-600" />
+                    Boletería
+                </h1>
+                <p className="text-slate-500">Escanea los códigos QR de los usuarios para validar el acceso.</p>
             </header>
 
-            <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
-                <form onSubmit={handleScan} className="flex gap-4">
-                    <input
-                        type="text"
-                        placeholder="Pega el código QR aquí..."
-                        className="flex-1 px-6 py-5 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-mono text-sm"
-                        value={qrInput}
-                        onChange={(e) => setQrInput(e.target.value)}
-                    />
-                    <button
-                        type="submit"
-                        disabled={loading || !qrInput}
-                        className="bg-slate-900 text-white px-8 py-5 rounded-2xl font-bold hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-2"
-                    >
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Validar"}
-                    </button>
-                </form>
+            {!scanResult ? (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div id="reader" className="w-full rounded-2xl overflow-hidden [&>*]:border-none [&>div>button]:bg-blue-600 [&>div>button]:text-white [&>div>button]:px-4 [&>div>button]:py-2 [&>div>button]:rounded-lg [&>div>button]:font-bold mt-4" />
+                    <p className="text-center text-sm text-slate-400 mt-4">Apunta la cámara al código QR de la entrada</p>
+                </div>
+            ) : (
+                <div className={`p-8 rounded-3xl shadow-lg border-2 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95 duration-300
+                    ${scanResult === 'success' ? 'bg-green-50 border-green-200' : ''}
+                    ${scanResult === 'used' ? 'bg-amber-50 border-amber-200' : ''}
+                    ${scanResult === 'invalid' ? 'bg-red-50 border-red-200' : ''}
+                `}>
 
-                {result && (
-                    <div className={`p-8 rounded-[32px] animate-in zoom-in duration-300 ${result.success ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
-                        }`}>
-                        <div className="flex items-start gap-6">
-                            {result.success ? (
-                                <CheckCircle className="w-12 h-12 text-green-600 shrink-0" />
-                            ) : (
-                                <XCircle className="w-12 h-12 text-red-600 shrink-0" />
-                            )}
+                    {scanResult === 'success' && (
+                        <>
+                            <div className="bg-green-500 text-white p-4 rounded-full shadow-lg shadow-green-500/30">
+                                <CheckCircle2 className="w-16 h-16" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-black text-green-700">ACCESO PERMITIDO</h2>
+                                <p className="text-slate-600 font-medium">La entrada ha sido validada y marcada como utilizada.</p>
+                            </div>
+                        </>
+                    )}
 
-                            <div className="space-y-4">
+                    {scanResult === 'used' && (
+                        <>
+                            <div className="bg-amber-500 text-white p-4 rounded-full shadow-lg shadow-amber-500/30">
+                                <AlertTriangle className="w-16 h-16" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-black text-amber-700">ENTRADA YA UTILIZADA</h2>
+                                <p className="text-slate-600 font-medium tracking-tight">Cuidado, esta entrada fue escaneada previamente.</p>
+                            </div>
+                        </>
+                    )}
+
+                    {scanResult === 'invalid' && (
+                        <>
+                            <div className="bg-red-500 text-white p-4 rounded-full shadow-lg shadow-red-500/30">
+                                <XCircle className="w-16 h-16" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-3xl font-black text-red-700">ENTRADA INVÁLIDA</h2>
+                                <p className="text-slate-600 font-medium">El código QR no pertenece a ningún evento válido en el sistema.</p>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Ticket Details Box */}
+                    {ticketData && (
+                        <div className="w-full bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-left mt-4">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Detalles del Asistente</h3>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <h3 className={`text-xl font-black ${result.success ? 'text-green-900' : 'text-red-900'}`}>
-                                        {result.message}
-                                    </h3>
-                                    {result.ticket && (
-                                        <p className="text-slate-500 text-sm font-medium mt-1">
-                                            Evento: <span className="text-slate-800 font-bold">{result.ticket.events.name}</span>
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-slate-500">Titular</p>
+                                    <p className="font-bold text-slate-900">{ticketData.name_holder}</p>
                                 </div>
-
-                                {result.ticket && (
-                                    <div className="flex items-center gap-4 bg-white/50 p-4 rounded-2xl border border-white">
-                                        <div className="bg-white p-2 rounded-xl shadow-sm text-slate-400">
-                                            <User className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asistente</p>
-                                            <p className="font-bold text-slate-900">{result.ticket.name_holder}</p>
-                                            <p className="text-xs text-slate-500">DNI: {result.ticket.dni_holder}</p>
-                                        </div>
+                                <div>
+                                    <p className="text-xs text-slate-500">DNI</p>
+                                    <p className="font-bold text-slate-900">{ticketData.dni_holder}</p>
+                                </div>
+                                <div className="col-span-2 pt-3 border-t border-slate-100">
+                                    <p className="text-xs text-slate-500">Tipo de Entrada</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Ticket className="w-4 h-4 text-blue-600" />
+                                        <p className="font-bold text-slate-900">{ticketData.ticket_types?.name}</p>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
 
-            <div className="text-center">
-                <p className="text-slate-300 text-xs font-bold uppercase tracking-[0.3em]">Modo Staff - Seguridad U-Ticket</p>
-            </div>
+                    <button
+                        onClick={resumeScanning}
+                        className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold flex flex-col items-center justify-center gap-1 hover:bg-slate-800 transition-colors mt-8"
+                    >
+                        <RefreshCcw className="w-5 h-5 mb-1" />
+                        <span className="uppercase tracking-widest text-[10px]">Escanear Siguiente</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
