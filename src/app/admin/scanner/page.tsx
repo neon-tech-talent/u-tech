@@ -12,49 +12,86 @@ export default function TicketScanner() {
     const [ticketData, setTicketData] = useState<any>(null);
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
-    const scannerRef = useRef<any>(null);
+    const [isStarting, setIsStarting] = useState(false);
+
+    // Refs that survive renders
+    const qrInstanceRef = useRef<any>(null);
     const processingRef = useRef(false);
+    const mountedRef = useRef(true);
 
-    // Start the camera directly once script is ready
-    const startCamera = () => {
-        if (typeof window === "undefined" || !(window as any).Html5Qrcode) return;
+    // ── helpers ──────────────────────────────────────────────
 
-        // Clear any previous instance
-        if (scannerRef.current) {
-            scannerRef.current.stop().catch(() => { }).finally(() => {
-                scannerRef.current = null;
-                initScanner();
-            });
-        } else {
-            initScanner();
+    const stopCamera = async () => {
+        if (qrInstanceRef.current) {
+            try {
+                const state = qrInstanceRef.current.getState?.();
+                // state 2 = SCANNING, state 3 = PAUSED
+                if (state === 2 || state === 3) {
+                    await qrInstanceRef.current.stop();
+                }
+            } catch (_) {
+                // ignore errors on stop — element may already be unmounted
+            }
+            qrInstanceRef.current = null;
         }
+        // Belt-and-suspenders: kill any lingering camera tracks
+        try {
+            const tracks = await navigator.mediaDevices
+                .getUserMedia({ video: true })
+                .then(s => s.getTracks())
+                .catch(() => []);
+            tracks.forEach(t => t.stop());
+        } catch (_) { }
     };
 
-    const initScanner = () => {
-        const Html5Qrcode = (window as any).Html5Qrcode;
-        const scanner = new Html5Qrcode("qr-reader");
-        scannerRef.current = scanner;
+    const startCamera = async () => {
+        if (!mountedRef.current) return;
+        if (!(window as any).Html5Qrcode) return;
+        if (isStarting) return;
+
+        await stopCamera(); // clean up any existing instance first
+
+        setIsStarting(true);
+        setCameraError(null);
         processingRef.current = false;
 
-        scanner.start(
-            { facingMode: "environment" }, // always use back camera
-            { fps: 10, qrbox: { width: 240, height: 240 } },
-            handleScanSuccess,
-            () => { } // ignore non-fatal scan errors (ongoing frames)
-        ).catch((err: any) => {
+        const Html5Qrcode = (window as any).Html5Qrcode;
+
+        // The element MUST exist in DOM before we start
+        const el = document.getElementById("qr-reader");
+        if (!el) {
+            setIsStarting(false);
+            return;
+        }
+
+        // Clear stale markup left by a previous instance
+        el.innerHTML = "";
+
+        try {
+            const scanner = new Html5Qrcode("qr-reader");
+            qrInstanceRef.current = scanner;
+
+            await scanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 240, height: 240 } },
+                handleScanSuccess,
+                () => { } // ignore per-frame decode errors
+            );
+        } catch (err: any) {
             console.error("Camera error:", err);
-            setCameraError("No se pudo acceder a la cámara. Asegurate de permitir el acceso.");
-        });
+            if (mountedRef.current) {
+                setCameraError("No se pudo acceder a la cámara. Asegurate de permitir el acceso y recargá la página.");
+            }
+        } finally {
+            if (mountedRef.current) setIsStarting(false);
+        }
     };
 
     const handleScanSuccess = async (decodedText: string) => {
-        if (processingRef.current) return;
+        if (processingRef.current || !mountedRef.current) return;
         processingRef.current = true;
 
-        // Stop scanning while we validate
-        if (scannerRef.current) {
-            await scannerRef.current.stop().catch(() => { });
-        }
+        await stopCamera();
 
         try {
             const { data, error } = await supabase
@@ -62,6 +99,8 @@ export default function TicketScanner() {
                 .select("*, ticket_types(name)")
                 .eq("qr_code", decodedText)
                 .single();
+
+            if (!mountedRef.current) return;
 
             if (error || !data) {
                 setScanResult("invalid");
@@ -78,9 +117,12 @@ export default function TicketScanner() {
                     .update({ status: "USED" })
                     .eq("id", data.id);
 
+                if (!mountedRef.current) return;
+
                 if (updateError) {
-                    alert("Error al actualizar la entrada en la base de datos.");
+                    alert("Error al actualizar la entrada.");
                     processingRef.current = false;
+                    startCamera();
                     return;
                 }
                 setScanResult("success");
@@ -89,30 +131,36 @@ export default function TicketScanner() {
             }
         } catch (err) {
             console.error(err);
-            setScanResult("invalid");
+            if (mountedRef.current) setScanResult("invalid");
         }
     };
 
-    const resumeScanning = () => {
+    const resumeScanning = async () => {
+        if (!mountedRef.current) return;
         setScanResult(null);
         setTicketData(null);
         setCameraError(null);
         processingRef.current = false;
-        // Small delay to allow the DOM element to reappear
-        setTimeout(() => startCamera(), 100);
+        // Wait one frame so React flushes the state (shows the #qr-reader div)
+        await new Promise(r => setTimeout(r, 80));
+        startCamera();
     };
 
-    // Start camera as soon as the library script is loaded
+    // ── lifecycle ─────────────────────────────────────────────
+
     useEffect(() => {
-        if (scriptLoaded) {
-            startCamera();
-        }
+        mountedRef.current = true;
+        if (scriptLoaded) startCamera();
+
         return () => {
-            if (scannerRef.current) {
-                scannerRef.current.stop().catch(() => { });
-            }
+            // This runs when user navigates away
+            mountedRef.current = false;
+            stopCamera();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scriptLoaded]);
+
+    // ── render ────────────────────────────────────────────────
 
     return (
         <div className="max-w-xl mx-auto space-y-6">
@@ -127,48 +175,49 @@ export default function TicketScanner() {
                     <ScanFace className="w-7 h-7 text-blue-600" />
                     Boletería
                 </h1>
-                <p className="text-slate-500 text-sm mt-1">Escanea los códigos QR de los usuarios para validar el acceso.</p>
+                <p className="text-slate-500 text-sm mt-1">
+                    Escanea los códigos QR de los usuarios para validar el acceso.
+                </p>
             </header>
 
-            {!scanResult ? (
-                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-200">
-                    {cameraError ? (
-                        <div className="text-center py-12 space-y-4">
-                            <XCircle className="w-12 h-12 text-red-400 mx-auto" />
-                            <p className="text-red-600 font-bold text-sm">{cameraError}</p>
-                            <button
-                                onClick={resumeScanning}
-                                className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm"
-                            >
-                                Reintentar
-                            </button>
-                        </div>
-                    ) : (
-                        <>
-                            <div
-                                id="qr-reader"
-                                className="w-full rounded-2xl overflow-hidden"
-                                style={{ minHeight: 300 }}
-                            />
-                            {!scriptLoaded && (
-                                <p className="text-center text-sm text-slate-400 mt-4 animate-pulse">
-                                    Iniciando cámara...
-                                </p>
-                            )}
-                        </>
-                    )}
-                    <p className="text-center text-xs text-slate-400 mt-3">
-                        Apunta la cámara al código QR de la entrada
-                    </p>
-                </div>
-            ) : (
+            {/* ── Camera card — ALWAYS in DOM so Html5Qrcode can find #qr-reader ── */}
+            <div className={`bg-white p-4 rounded-3xl shadow-sm border border-slate-200 ${scanResult ? "hidden" : ""}`}>
+                {cameraError ? (
+                    <div className="text-center py-12 space-y-4">
+                        <XCircle className="w-12 h-12 text-red-400 mx-auto" />
+                        <p className="text-red-600 font-bold text-sm">{cameraError}</p>
+                        <button
+                            onClick={resumeScanning}
+                            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* This div MUST stay mounted — Html5Qrcode injects video inside it */}
+                        <div id="qr-reader" className="w-full rounded-2xl overflow-hidden" style={{ minHeight: 300 }} />
+                        {(isStarting || !scriptLoaded) && (
+                            <p className="text-center text-sm text-slate-400 mt-3 animate-pulse">
+                                Iniciando cámara…
+                            </p>
+                        )}
+                    </>
+                )}
+                <p className="text-center text-xs text-slate-400 mt-3">
+                    Apunta la cámara al código QR de la entrada
+                </p>
+            </div>
+
+            {/* ── Result card ── */}
+            {scanResult && (
                 <div className={`p-8 rounded-3xl shadow-lg border-2 flex flex-col items-center text-center space-y-5
-                    ${scanResult === 'success' ? 'bg-green-50 border-green-200' : ''}
-                    ${scanResult === 'used' ? 'bg-amber-50 border-amber-200' : ''}
-                    ${scanResult === 'invalid' ? 'bg-red-50 border-red-200' : ''}
+                    ${scanResult === "success" ? "bg-green-50 border-green-200" : ""}
+                    ${scanResult === "used" ? "bg-amber-50 border-amber-200" : ""}
+                    ${scanResult === "invalid" ? "bg-red-50   border-red-200" : ""}
                 `}>
 
-                    {scanResult === 'success' && (
+                    {scanResult === "success" && (
                         <>
                             <div className="bg-green-500 text-white p-4 rounded-full shadow-lg shadow-green-500/30">
                                 <CheckCircle2 className="w-14 h-14" />
@@ -180,7 +229,7 @@ export default function TicketScanner() {
                         </>
                     )}
 
-                    {scanResult === 'used' && (
+                    {scanResult === "used" && (
                         <>
                             <div className="bg-amber-500 text-white p-4 rounded-full shadow-lg shadow-amber-500/30">
                                 <AlertTriangle className="w-14 h-14" />
@@ -192,7 +241,7 @@ export default function TicketScanner() {
                         </>
                     )}
 
-                    {scanResult === 'invalid' && (
+                    {scanResult === "invalid" && (
                         <>
                             <div className="bg-red-500 text-white p-4 rounded-full shadow-lg shadow-red-500/30">
                                 <XCircle className="w-14 h-14" />
