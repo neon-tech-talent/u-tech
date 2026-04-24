@@ -148,12 +148,12 @@ export default function TicketList({ initialTickets }: { initialTickets: any[] }
                             )}
                         </div>
 
-                        <div className="bg-slate-900 w-full md:w-32 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-white/10 text-white">
-                            <div className="bg-white p-2 rounded-[16px] mb-3 group-hover:scale-110 transition-transform duration-500">
+                        <div className="bg-slate-900 w-full md:w-52 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-white/10 text-white">
+                            <div className="bg-white p-3 rounded-[16px] mb-3 group-hover:scale-105 transition-transform duration-500">
                                 <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticket.qr_code}&margin=0`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${ticket.qr_code}&margin=0`}
                                     alt="QR Code"
-                                    className="w-20 h-20 md:w-24 md:h-24 object-contain rounded-lg"
+                                    className="w-40 h-40 md:w-44 md:h-44 object-contain rounded-lg"
                                 />
                             </div>
                             <p className="text-[8px] font-mono opacity-50 break-all text-center">
