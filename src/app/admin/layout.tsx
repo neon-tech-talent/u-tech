@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Scan, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, Scan, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -12,13 +12,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
         { href: "/admin/events", icon: Calendar, label: "Eventos" },
         { href: "/admin/scanner", icon: Scan, label: "Escanear QR" },
-        { href: "/admin/settings", icon: Settings, label: "Configuración" },
+        { href: "/admin/settings", icon: Settings, label: "Config" },
     ];
 
     return (
         <div className="flex min-h-screen bg-slate-100">
-            {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex flex-col">
+            {/* Sidebar - desktop only */}
+            <aside className="hidden md:flex w-64 bg-slate-900 text-white flex-col">
                 <div className="p-8">
                     <h2 className="text-2xl font-black tracking-tight text-blue-400">ADMIN <span className="text-white">U-T</span></h2>
                 </div>
@@ -43,18 +43,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         );
                     })}
                 </nav>
-
-                <div className="p-4 mt-auto border-t border-white/5">
-                    <button className="flex items-center gap-3 w-full p-4 text-slate-500 hover:text-white transition-colors">
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-bold">Cerrar Sesión</span>
-                    </button>
-                </div>
             </aside>
 
-            <main className="flex-1 p-10 overflow-y-auto">
+            {/* Main content */}
+            <main className="flex-1 p-4 md:p-10 overflow-y-auto pb-24 md:pb-10">
                 {children}
             </main>
+
+            {/* Bottom nav bar - mobile only */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-white/10 flex items-center justify-around px-2 py-3 z-50">
+                {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all",
+                                isActive ? "text-blue-400" : "text-slate-500"
+                            )}
+                        >
+                            <item.icon className="w-6 h-6" />
+                            <span className="text-[10px] font-bold">{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
         </div>
     );
 }

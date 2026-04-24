@@ -38,12 +38,13 @@ export default function Home() {
     );
 
     return (
-        <div className="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
-            <header className="space-y-6">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-black text-slate-900 tracking-tight">Eventos Disponibles</h1>
-                    <p className="text-xl text-slate-500 max-w-2xl">Descubre experiencias únicas de nuestras empresas aliadas y reserva tu lugar hoy mismo.</p>
+        <div className="max-w-7xl mx-auto px-4 py-6 md:px-12 md:py-12 space-y-8 md:space-y-12">
+            <header className="space-y-4 md:space-y-6">
+                <div className="space-y-2 md:space-y-4">
+                    <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">Eventos Disponibles</h1>
+                    <p className="text-base md:text-xl text-slate-500 max-w-2xl">Descubre experiencias únicas de nuestras empresas aliadas y reserva tu lugar hoy mismo.</p>
                 </div>
+
 
                 {/* Featured Carousel */}
                 {featuredEvents.length > 0 && !search && (

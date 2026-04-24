@@ -72,7 +72,7 @@ export default function EventDetail({ params }: { params: { id: string } }) {
             )}
 
             {/* Banner Hero */}
-            <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-slate-900 group">
+            <div className="relative h-[40vh] md:h-[50vh] min-h-[280px] md:min-h-[400px] overflow-hidden bg-slate-900 group">
                 {event.banner_url ? (
                     <img
                         src={event.banner_url}
@@ -85,9 +85,9 @@ export default function EventDetail({ params }: { params: { id: string } }) {
                     </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 max-w-7xl mx-auto">
-                    <div className="max-w-3xl space-y-6">
-                        <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter">
+                <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8 lg:p-16 max-w-7xl mx-auto">
+                    <div className="max-w-3xl space-y-4 md:space-y-6">
+                        <h1 className="text-3xl md:text-5xl lg:text-8xl font-black text-white leading-none tracking-tighter">
                             {event.name}
                         </h1>
                     </div>
