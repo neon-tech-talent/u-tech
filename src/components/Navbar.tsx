@@ -67,13 +67,15 @@ export default function Navbar() {
                                 <span className="hidden md:block text-[10px] font-bold uppercase tracking-widest mt-1">Mis Tickets</span>
                             </Link>
 
-                            {(role === 'ADMIN' || role === 'SUPERADMIN') && (
+                            {(role === 'ADMIN' || role === 'SUPERADMIN' || role === 'SCANNER') && (
                                 <Link
-                                    href="/admin"
+                                    href={role === 'SCANNER' ? "/admin/scanner" : "/admin"}
                                     className="flex flex-col items-center justify-center p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 >
                                     <Settings className="w-5 h-5" />
-                                    <span className="hidden md:block text-[10px] font-bold uppercase tracking-widest mt-1">Panel Empresa</span>
+                                    <span className="hidden md:block text-[10px] font-bold uppercase tracking-widest mt-1">
+                                        {role === 'SCANNER' ? 'Boletería' : 'Panel Empresa'}
+                                    </span>
                                 </Link>
                             )}
 

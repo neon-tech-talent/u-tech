@@ -1,19 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Scan, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Calendar, Scan, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [role, setRole] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function checkAccess() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push("/login");
+                return;
+            }
+
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", session.user.id)
+                .single();
+
+            const userRole = profile?.role;
+            setRole(userRole);
+
+            if (userRole === "CUSTOMER") {
+                router.push("/");
+            } else if (userRole === "SCANNER" && pathname !== "/admin/scanner") {
+                router.push("/admin/scanner");
+            } else {
+                setIsLoading(false);
+            }
+        }
+        checkAccess();
+    }, [pathname, router]);
 
     const navItems = [
-        { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-        { href: "/admin/events", icon: Calendar, label: "Eventos" },
-        { href: "/admin/scanner", icon: Scan, label: "Escanear QR" },
-        { href: "/admin/settings", icon: Settings, label: "Config" },
-    ];
+        { href: "/admin", icon: LayoutDashboard, label: "Dashboard", allowed: ["ADMIN", "SUPERADMIN"] },
+        { href: "/admin/events", icon: Calendar, label: "Eventos", allowed: ["ADMIN", "SUPERADMIN"] },
+        { href: "/admin/scanner", icon: Scan, label: "Escanear QR", allowed: ["ADMIN", "SUPERADMIN", "SCANNER"] },
+        { href: "/admin/settings", icon: Settings, label: "Config", allowed: ["ADMIN", "SUPERADMIN"] },
+    ].filter(item => item.allowed.includes(role || ""));
+
+    if (isLoading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="animate-pulse font-bold text-slate-400">Verificando accesos...</div></div>;
 
     return (
         <div className="flex min-h-screen bg-slate-100">
