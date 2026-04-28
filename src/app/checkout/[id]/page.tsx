@@ -10,7 +10,7 @@ export default async function CheckoutPage({
     searchParams
 }: {
     params: { id: string },
-    searchParams: { selection: string, seatId?: string }
+    searchParams: { [key: string]: string | string[] | undefined }
 }) {
     const { data: event } = await supabase
         .from("events")
@@ -18,8 +18,11 @@ export default async function CheckoutPage({
         .eq("id", params.id)
         .single();
 
-    const selection = JSON.parse(atob(searchParams.selection));
-    const seatId = searchParams.seatId;
+    if (!searchParams.selection) return <div>Faltan parámetros de selección</div>;
+    
+    const selectionStr = Array.isArray(searchParams.selection) ? searchParams.selection[0] : searchParams.selection;
+    const selection = JSON.parse(atob(selectionStr));
+    const seatId = Array.isArray(searchParams.seatId) ? searchParams.seatId[0] : searchParams.seatId;
     const { data: ticketTypes } = await supabase
         .from("ticket_types")
         .select("*")

@@ -34,7 +34,7 @@ export default function StatsPage() {
             if (error) throw error;
 
             // Group by event
-            const eventStats = tickets.reduce((acc: any, t: any) => {
+            const eventStats = (tickets || []).reduce((acc: any, t: any) => {
                 const eventName = t.events?.name || "Sin nombre";
                 if (!acc[eventName]) {
                     acc[eventName] = { name: eventName, count: 0, serviceChargeTotal: 0 };
