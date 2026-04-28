@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from "@/lib/utils";
 import { AlertCircle, Loader2, CreditCard, QrCode, Wallet, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 
 interface CheckoutFormProps {
@@ -35,6 +36,11 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
             id: `${typeId}-${i}`
         }));
     });
+
+    const subtotal = ticketTypes.reduce((acc, t) => acc + (t.price * (selection[t.id] || 0)), 0);
+    const serviceChargePercent = event.service_charge_percent || 0;
+    const serviceChargeTotal = (subtotal * serviceChargePercent) / 100;
+    const totalWithCharge = subtotal + serviceChargeTotal;
 
     const [holders, setHolders] = useState<Record<string, { name: string, dni: string }>>({});
 
