@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Calendar, Scan, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, Scan, Settings, LogOut, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const navItems = [
         { href: "/admin", icon: LayoutDashboard, label: "Dashboard", allowed: ["ADMIN", "SUPERADMIN"] },
         { href: "/admin/events", icon: Calendar, label: "Eventos", allowed: ["ADMIN", "SUPERADMIN"] },
+        { href: "/admin/stats", icon: BarChart3, label: "Estadísticas", allowed: ["ADMIN", "SUPERADMIN"] },
         { href: "/admin/scanner", icon: Scan, label: "Escanear QR", allowed: ["ADMIN", "SUPERADMIN", "SCANNER"] },
         { href: "/admin/settings", icon: Settings, label: "Config", allowed: ["ADMIN", "SUPERADMIN"] },
     ].filter(item => item.allowed.includes(role || ""));

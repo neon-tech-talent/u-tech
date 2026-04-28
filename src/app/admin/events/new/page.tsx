@@ -18,6 +18,7 @@ export default function NewEvent() {
     const [venueMapUrl, setVenueMapUrl] = useState("");
     const [generalPrice, setGeneralPrice] = useState(0);
     const [generalCapacity, setGeneralCapacity] = useState(1000);
+    const [serviceChargePercent, setServiceChargePercent] = useState(0);
     const [sections, setSections] = useState<{ name: string; rows: number; seatsPerRow: number; price: number }[]>([]);
 
     const handleAddSection = () => {
@@ -89,6 +90,7 @@ export default function NewEvent() {
                     banner_url: finalBannerUrl,
                     venue_map_url: finalVenueMapUrl,
                     is_featured: isFeatured,
+                    service_charge_percent: serviceChargePercent,
                     total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
                 })
                 .select()
@@ -184,6 +186,23 @@ export default function NewEvent() {
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                             />
+                        </div>
+                    </div>
+ 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-50 pt-8">
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2 text-blue-600">Service Charge (%)</label>
+                            <div className="relative">
+                                <span className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">%</span>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    className="w-full px-6 py-4 rounded-2xl bg-blue-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-blue-600"
+                                    value={serviceChargePercent}
+                                    onChange={(e) => setServiceChargePercent(parseFloat(e.target.value))}
+                                />
+                            </div>
                         </div>
                     </div>
 

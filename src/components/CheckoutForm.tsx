@@ -62,12 +62,18 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
             if (!user) throw new Error("Debes iniciar sesión para comprar.");
 
             // 1. Create order
+            const subtotal = ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0);
+            const serviceChargePercent = event.service_charge_percent || 0;
+            const serviceChargeTotal = (subtotal * serviceChargePercent) / 100;
+            const totalWithCharge = subtotal + serviceChargeTotal;
+
             const { data: order, error: orderError } = await supabase
                 .from("orders")
                 .insert({
                     company_id: event.company_id,
                     user_id: user.id,
-                    total_amount: ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0),
+                    total_amount: totalWithCharge,
+                    service_charge_total: serviceChargeTotal,
                     status: 'COMPLETED', // Simulating successful payment for MVP
                     expires_at: new Date(Date.now() + 5 * 60000).toISOString()
                 })
@@ -77,16 +83,24 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
             if (orderError) throw orderError;
 
             // 2. Create tickets
-            const ticketsToInsert = items.map((item, idx) => ({
-                company_id: event.company_id,
-                event_id: event.id,
-                order_id: order.id,
-                ticket_type_id: item.typeId,
-                seat_id: idx === 0 ? (seatId || null) : null,
-                dni_holder: holders[item.id].dni,
-                name_holder: holders[item.id].name,
-                status: 'VALID'
-            }));
+            const ticketsToInsert = items.map((item, idx) => {
+                const type = ticketTypes.find(t => t.id === item.typeId);
+                const basePrice = type?.price || 0;
+                const scAmount = (basePrice * serviceChargePercent) / 100;
+                
+                return {
+                    company_id: event.company_id,
+                    event_id: event.id,
+                    order_id: order.id,
+                    ticket_type_id: item.typeId,
+                    seat_id: idx === 0 ? (seatId || null) : null,
+                    dni_holder: holders[item.id].dni,
+                    name_holder: holders[item.id].name,
+                    base_price: basePrice,
+                    service_charge_amount: scAmount,
+                    status: 'VALID'
+                };
+            });
 
             const { error: ticketsError } = await supabase
                 .from("tickets")

@@ -37,6 +37,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     const [sections, setSections] = useState<Section[]>([]);
     const [seats, setSeats] = useState<Seat[]>([]);
     const [soldCounts, setSoldCounts] = useState<Record<string, number>>({});
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const [selectedSection, setSelectedSection] = useState<string>("");
     const [selectedRow, setSelectedRow] = useState<string>("");
@@ -49,7 +50,20 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
             fetchSeatingData();
         }
         fetchSoldCounts();
+        fetchUserRole();
     }, [event.id, ticketTypes]);
+
+    const fetchUserRole = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", session.user.id)
+                .single();
+            if (profile) setUserRole(profile.role);
+        }
+    };
 
     const fetchSoldCounts = async () => {
         if (ticketTypes.length === 0) return;
@@ -92,11 +106,14 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
         (s.status === 'AVAILABLE' || (s.status === 'RESERVED' && s.reserved_until && new Date(s.reserved_until) < new Date()))
     ).sort((a, b) => parseInt(a.seat_number) - parseInt(b.seat_number));
 
-    const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-    const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const totalBasePrice = Object.entries(cart).reduce((sum, [id, qty]) => {
         const type = ticketTypes.find(t => t.id === id);
         return sum + (type?.price || 0) * qty;
     }, 0);
+
+    const serviceChargePercent = event.service_charge_percent || 0;
+    const totalServiceCharge = (totalBasePrice * serviceChargePercent) / 100;
+    const totalPrice = totalBasePrice + totalServiceCharge;
 
     const handleProceed = () => {
         const selection = btoa(JSON.stringify(cart));
@@ -192,7 +209,12 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                             <div key={type.id} className="py-6 flex items-center justify-between">
                                 <div className="space-y-1">
                                     <h4 className="font-bold text-slate-800 text-lg">{type.name}</h4>
-                                    <p className="text-slate-500">{formatCurrency(type.price)}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-slate-500 font-bold">{formatCurrency(type.price)}</p>
+                                        {serviceChargePercent > 0 && (
+                                            <p className="text-[10px] text-slate-400 font-medium">+ {serviceChargePercent}% Service Charge</p>
+                                        )}
+                                    </div>
                                     {isSoldOut ? (
                                         <span className="inline-block px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">
                                             AGOTADO
@@ -208,7 +230,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                     )}
                                 </div>
 
-                                <div className={`flex items-center gap-4 bg-slate-100 p-2 rounded-xl transition-opacity ${isSoldOut ? 'opacity-30 pointer-events-none' : ''}`}>
+                                <div className={`flex items-center gap-4 bg-slate-100 p-2 rounded-xl transition-opacity ${isSoldOut || userRole === 'SCANNER' ? 'opacity-30 pointer-events-none' : ''}`}>
                                     <button
                                         onClick={() => handleUpdateQuantity(type.id, -1, remaining)}
                                         className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
@@ -235,18 +257,37 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                 )}
             </div>
 
-            {(totalItems > 0 && (event.location_type === 'GENERAL' || selectedSeat)) && (
-                <div className="mt-8 bg-slate-900 rounded-2xl p-6 text-white flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div>
-                        <p className="text-slate-400 text-sm">{totalItems} {totalItems === 1 ? 'ticket' : 'tickets'} seleccionados</p>
-                        <p className="text-2xl font-bold">{formatCurrency(totalPrice)}</p>
+            {(totalItems > 0 && (event.location_type === 'GENERAL' || selectedSeat)) && userRole !== 'SCANNER' && (
+                <div className="mt-8 bg-slate-900 rounded-2xl p-6 text-white space-y-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                            <p className="text-slate-400 text-sm">{totalItems} {totalItems === 1 ? 'ticket' : 'tickets'} seleccionados</p>
+                            <div className="flex items-baseline gap-2">
+                                <p className="text-2xl font-bold">{formatCurrency(totalPrice)}</p>
+                                {serviceChargePercent > 0 && (
+                                    <p className="text-xs text-slate-400 italic">Incluye service charge</p>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleProceed}
+                            className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl font-bold transition-transform active:scale-95"
+                        >
+                            Continuar Compra
+                        </button>
                     </div>
-                    <button
-                        onClick={handleProceed}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl font-bold transition-transform active:scale-95"
-                    >
-                        Continuar Compra
-                    </button>
+                    {serviceChargePercent > 0 && (
+                        <div className="flex justify-between text-[10px] uppercase tracking-widest font-black text-slate-500">
+                            <span>Base: {formatCurrency(totalBasePrice)}</span>
+                            <span>S.C. ({serviceChargePercent}%): {formatCurrency(totalServiceCharge)}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {userRole === 'SCANNER' && (
+                <div className="mt-8 bg-blue-50 border border-blue-100 p-6 rounded-[32px] text-center">
+                    <p className="text-blue-600 font-bold">Como Boletero/Scanner, no tienes permisos para realizar compras.</p>
                 </div>
             )}
 

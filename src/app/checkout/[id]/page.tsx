@@ -63,11 +63,23 @@ export default async function CheckoutPage({
                                         <span className="font-bold text-slate-900">${(selection[type.id] * type.price).toLocaleString()}</span>
                                     </div>
                                 ))}
-                                <div className="pt-4 border-t border-slate-100 flex justify-between font-extrabold text-lg">
-                                    <span>Total</span>
-                                    <span className="text-blue-600">
-                                        ${ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0).toLocaleString()}
-                                    </span>
+                                <div className="pt-4 border-t border-slate-100 space-y-2">
+                                    <div className="flex justify-between text-sm text-slate-500">
+                                        <span>Subtotal</span>
+                                        <span>${ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0).toLocaleString()}</span>
+                                    </div>
+                                    {(event.service_charge_percent || 0) > 0 && (
+                                        <div className="flex justify-between text-sm text-blue-600 font-medium">
+                                            <span>Service Charge ({event.service_charge_percent}%)</span>
+                                            <span>${(ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0) * (event.service_charge_percent || 0) / 100).toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    <div className="pt-2 flex justify-between font-extrabold text-lg border-t border-slate-50">
+                                        <span>Total</span>
+                                        <span className="text-slate-900">
+                                            ${(ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0) * (1 + (event.service_charge_percent || 0) / 100)).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
