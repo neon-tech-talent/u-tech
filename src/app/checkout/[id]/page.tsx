@@ -69,18 +69,18 @@ export default async function CheckoutPage({
                                 <div className="pt-4 border-t border-slate-100 space-y-2">
                                     <div className="flex justify-between text-sm text-slate-500">
                                         <span>Subtotal</span>
-                                        <span>${ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0).toLocaleString()}</span>
+                                        <span>${ticketTypes.reduce((acc: number, t: any) => acc + (t.price * Number(selection[t.id] || 0)), 0).toLocaleString()}</span>
                                     </div>
                                     {(event.service_charge_percent || 0) > 0 && (
                                         <div className="flex justify-between text-sm text-blue-600 font-medium">
                                             <span>Service Charge ({event.service_charge_percent}%)</span>
-                                            <span>${(ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0) * (event.service_charge_percent || 0) / 100).toLocaleString()}</span>
+                                            <span>${(ticketTypes.reduce((acc: number, t: any) => acc + (t.price * Number(selection[t.id] || 0)), 0) * (event.service_charge_percent || 0) / 100).toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="pt-2 flex justify-between font-extrabold text-lg border-t border-slate-50">
                                         <span>Total</span>
                                         <span className="text-slate-900">
-                                            ${(ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0) * (1 + (event.service_charge_percent || 0) / 100)).toLocaleString()}
+                                            ${(ticketTypes.reduce((acc: number, t: any) => acc + (t.price * Number(selection[t.id] || 0)), 0) * (1 + (event.service_charge_percent || 0) / 100)).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>

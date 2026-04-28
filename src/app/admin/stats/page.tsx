@@ -46,7 +46,7 @@ export default function StatsPage() {
 
             const statsArray = Object.values(eventStats);
             setStats(statsArray);
-            setTotalGains(statsArray.reduce((acc: any, s: any) => acc + s.serviceChargeTotal, 0));
+            setTotalGains(statsArray.reduce((acc: any, s: any) => acc + (s.serviceChargeTotal || 0), 0) as number);
         } catch (err) {
             console.error("Error fetching stats:", err);
         } finally {
@@ -90,7 +90,7 @@ export default function StatsPage() {
                     <div className="space-y-2">
                         <p className="text-slate-400 text-xs font-black uppercase tracking-[0.3em]">Tickets Vendidos</p>
                         <h2 className="text-5xl font-black text-slate-900 tracking-tighter">
-                            {stats.reduce((acc, s) => acc + s.count, 0)}
+                            {stats.reduce((acc: number, s: any) => acc + (s.count || 0), 0)}
                         </h2>
                     </div>
                 </div>
@@ -157,7 +157,7 @@ export default function StatsPage() {
                                 <tr className="bg-slate-900 text-white">
                                     <td className="px-8 py-6 font-black uppercase tracking-widest text-xs">Total del Período</td>
                                     <td className="px-8 py-6 text-center font-bold">
-                                        {stats.reduce((acc, s) => acc + s.count, 0)}
+                                        {stats.reduce((acc: number, s: any) => acc + (s.count || 0), 0)}
                                     </td>
                                     <td className="px-8 py-6 text-right font-black text-xl">
                                         {formatCurrency(totalGains)}

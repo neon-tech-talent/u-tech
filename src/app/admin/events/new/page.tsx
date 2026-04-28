@@ -91,7 +91,7 @@ export default function NewEvent() {
                     venue_map_url: finalVenueMapUrl,
                     is_featured: isFeatured,
                     service_charge_percent: serviceChargePercent,
-                    total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc, s) => acc + (s.rows * s.seatsPerRow), 0)
+                    total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc: number, s: any) => acc + (s.rows * s.seatsPerRow), 0)
                 })
                 .select()
                 .single();
