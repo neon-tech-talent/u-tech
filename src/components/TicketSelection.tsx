@@ -114,6 +114,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     const serviceChargePercent = event.service_charge_percent || 0;
     const totalServiceCharge = (totalBasePrice * serviceChargePercent) / 100;
     const totalPrice = totalBasePrice + totalServiceCharge;
+    const totalItems = Object.values(cart).reduce((acc: number, qty: number) => acc + qty, 0);
 
     const handleProceed = () => {
         const selection = btoa(JSON.stringify(cart));
