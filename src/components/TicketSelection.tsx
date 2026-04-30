@@ -18,6 +18,7 @@ interface TicketType {
 interface Seat {
     id: string;
     section_id: string;
+    event_zone_id?: string;
     row_name: string;
     seat_number: string;
     status: 'AVAILABLE' | 'RESERVED' | 'SOLD';
