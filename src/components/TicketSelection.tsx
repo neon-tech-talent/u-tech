@@ -263,9 +263,13 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                                     setSelectedSeat(seat.id);
                                                                                     // Find ticket type for this zone
                                                                                     const ez = eventZones.find(z => z.id === selectedSection);
-                                                                                    const type = ticketTypes.find(t => t.name.includes(ez.name));
-                                                                                    if (type) {
-                                                                                        setCart({ [type.id]: 1 });
+                                                                                    if (ez) {
+                                                                                        const type = ticketTypes.find(t => 
+                                                                                            t.name.toLowerCase().includes(ez.name.toLowerCase())
+                                                                                        );
+                                                                                        if (type) {
+                                                                                            setCart({ [type.id]: 1 });
+                                                                                        }
                                                                                     }
                                                                                     setShowMap(false);
                                                                                 }
