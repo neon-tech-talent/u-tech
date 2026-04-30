@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { ScanFace, CheckCircle2, XCircle, AlertTriangle, RefreshCcw, Ticket } from "lucide-react";
 import * as OTPAuth from "otpauth";
 
-type ScanResult = null | "success" | "used" | "invalid";
+type ScanResult = null | "success" | "used" | "invalid" | "wrong_event";
 
 export default function TicketScanner() {
     const [scanResult, setScanResult] = useState<ScanResult>(null);
@@ -14,6 +14,9 @@ export default function TicketScanner() {
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [isStarting, setIsStarting] = useState(false);
+    const [events, setEvents] = useState<any[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+    const [loadingEvents, setLoadingEvents] = useState(true);
 
     // Refs that survive renders
     const qrInstanceRef = useRef<any>(null);
@@ -128,7 +131,14 @@ export default function TicketScanner() {
                 return;
             }
 
-            // 2. Validate TOTP if token is present
+            // 2. Check if ticket belongs to the selected event
+            if (data.event_id !== selectedEventId) {
+                setTicketData(data);
+                setScanResult("wrong_event");
+                return;
+            }
+
+            // 3. Validate TOTP if token is present
             if (scannedToken) {
                 const secret = (data.qr_seed || data.qr_code).replace(/-/g, "");
                 const totp = new OTPAuth.TOTP({
@@ -190,15 +200,29 @@ export default function TicketScanner() {
 
     useEffect(() => {
         mountedRef.current = true;
-        if (scriptLoaded) startCamera();
+        
+        const fetchEvents = async () => {
+            setLoadingEvents(true);
+            const { data } = await supabase
+                .from("events")
+                .select("id, name, event_date")
+                .order("event_date", { ascending: true });
+            
+            if (mountedRef.current && data) {
+                setEvents(data);
+            }
+            setLoadingEvents(false);
+        };
+
+        fetchEvents();
+
+        if (scriptLoaded && selectedEventId) startCamera();
 
         return () => {
-            // This runs when user navigates away
             mountedRef.current = false;
             stopCamera();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scriptLoaded]);
+    }, [scriptLoaded, selectedEventId]);
 
     // ── render ────────────────────────────────────────────────
 
@@ -211,15 +235,60 @@ export default function TicketScanner() {
             />
 
             <header className="mb-6">
-                <h1 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
-                    <ScanFace className="w-7 h-7 text-blue-600" />
-                    Boletería
-                </h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
+                        <ScanFace className="w-7 h-7 text-blue-600" />
+                        Boletería
+                    </h1>
+                    {selectedEventId && (
+                        <button 
+                            onClick={() => {
+                                stopCamera();
+                                setSelectedEventId(null);
+                                setScanResult(null);
+                            }}
+                            className="text-xs font-bold text-blue-600 hover:underline"
+                        >
+                            Cambiar Evento
+                        </button>
+                    )}
+                </div>
                 <p className="text-slate-500 text-sm mt-1">
-                    Escanea los códigos QR de los usuarios para validar el acceso.
+                    {selectedEventId 
+                        ? `Validando para: ${events.find(e => e.id === selectedEventId)?.name}`
+                        : "Selecciona el evento para comenzar a escanear."}
                 </p>
             </header>
 
+            {!selectedEventId ? (
+                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-4">
+                    <h2 className="text-lg font-bold text-slate-800 px-2">Seleccionar Evento</h2>
+                    {loadingEvents ? (
+                        <div className="flex justify-center py-10">
+                            <RefreshCcw className="w-8 h-8 text-slate-200 animate-spin" />
+                        </div>
+                    ) : (
+                        <div className="grid gap-3">
+                            {events.map(event => (
+                                <button
+                                    key={event.id}
+                                    onClick={() => setSelectedEventId(event.id)}
+                                    className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all text-left group"
+                                >
+                                    <span className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{event.name}</span>
+                                    <span className="text-xs text-slate-400 font-medium">
+                                        {new Date(event.event_date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+                                    </span>
+                                </button>
+                            ))}
+                            {events.length === 0 && (
+                                <p className="text-center py-10 text-slate-400 font-medium italic">No hay eventos disponibles.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <>
             {/* ── Camera card — ALWAYS in DOM so Html5Qrcode can find #qr-reader ── */}
             <div className={`bg-white p-4 rounded-3xl shadow-sm border border-slate-200 ${scanResult ? "hidden" : ""}`}>
                 {cameraError ? (
@@ -254,7 +323,7 @@ export default function TicketScanner() {
                 <div className={`p-8 rounded-3xl shadow-lg border-2 flex flex-col items-center text-center space-y-5
                     ${scanResult === "success" ? "bg-green-50 border-green-200" : ""}
                     ${scanResult === "used" ? "bg-amber-50 border-amber-200" : ""}
-                    ${scanResult === "invalid" ? "bg-red-50   border-red-200" : ""}
+                    ${scanResult === "invalid" || scanResult === "wrong_event" ? "bg-red-50   border-red-200" : ""}
                 `}>
 
                     {scanResult === "success" && (
@@ -281,14 +350,20 @@ export default function TicketScanner() {
                         </>
                     )}
 
-                    {scanResult === "invalid" && (
+                    {(scanResult === "invalid" || scanResult === "wrong_event") && (
                         <>
                             <div className="bg-red-500 text-white p-4 rounded-full shadow-lg shadow-red-500/30">
                                 <XCircle className="w-14 h-14" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-red-700">ENTRADA INVÁLIDA</h2>
-                                <p className="text-slate-600 text-sm mt-1">El QR no corresponde a ninguna entrada válida.</p>
+                                <h2 className="text-2xl font-black text-red-700">
+                                    {scanResult === "wrong_event" ? "EVENTO INCORRECTO" : "ENTRADA INVÁLIDA"}
+                                </h2>
+                                <p className="text-slate-600 text-sm mt-1">
+                                    {scanResult === "wrong_event" 
+                                        ? "Esta entrada pertenece a otro evento." 
+                                        : "El QR no corresponde a ninguna entrada válida."}
+                                </p>
                             </div>
                         </>
                     )}
@@ -326,6 +401,8 @@ export default function TicketScanner() {
                         Escanear Siguiente
                     </button>
                 </div>
+            )}
+            </>
             )}
         </div>
     );
