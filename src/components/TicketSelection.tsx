@@ -259,39 +259,12 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                             key={si}
                                                                             disabled={!isAvailable}
                                                                             onClick={() => {
-                                                                                if (!seat) return;
-                                                                                console.log("Seat clicked:", seat.id, "Row:", rowName, "Num:", seatNum);
-                                                                                try {
-                                                                                    setSelectedSeat(seat.id);
-                                                                                    
-                                                                                    const ez = eventZones.find(z => z.id === selectedSection);
-                                                                                    console.log("Zone for seat:", ez?.name);
-                                                                                    
-                                                                                    if (ez) {
-                                                                                        const type = ticketTypes.find(t => 
-                                                                                            t.name.toLowerCase().includes(ez.name.toLowerCase())
-                                                                                        );
-                                                                                        console.log("Found ticket type:", type?.name);
-                                                                                        
-                                                                                        if (type) {
-                                                                                            setCart({ [type.id]: 1 });
-                                                                                            console.log("Cart updated with type:", type.id);
-                                                                                        } else {
-                                                                                            console.warn("No ticket type found for zone:", ez.name);
-                                                                                        }
-                                                                                    }
-                                                                                    
-                                                                                    // Pequeño delay para que el usuario vea el cambio de color antes de cerrar
-                                                                                    setTimeout(() => setShowMap(false), 200);
-                                                                                } catch (err) {
-                                                                                    console.error("Error in seat selection:", err);
-                                                                                    setShowMap(false);
-                                                                                }
+                                                                                if (seat) setSelectedSeat(seat.id);
                                                                             }}
                                                                             className={cn(
                                                                                 "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
                                                                                 isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
-                                                                                isSelected ? "bg-red-500 text-white shadow-lg shadow-red-200 ring-2 ring-red-200" :
+                                                                                isSelected ? "bg-red-500 text-white shadow-lg shadow-red-500/40 ring-2 ring-red-200" :
                                                                                 "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
                                                                             )}
                                                                             title={`Fila ${rowName}, Asiento ${seatNum}`}
@@ -311,8 +284,29 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                 })}
                             </div>
                         </div>
-                        <footer className="p-8 border-t border-slate-100 bg-slate-50 flex justify-center">
+                        <footer className="p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escenario / Pantalla en esta dirección ↑</p>
+                            
+                            {selectedSeat && (
+                                <button
+                                    onClick={() => {
+                                        const seat = seats.find(s => s.id === selectedSeat);
+                                        const ez = eventZones.find(z => z.id === selectedSection);
+                                        if (ez) {
+                                            const type = ticketTypes.find(t => 
+                                                t.name.toLowerCase().includes(ez.name.toLowerCase())
+                                            );
+                                            if (type) {
+                                                setCart({ [type.id]: 1 });
+                                            }
+                                        }
+                                        setShowMap(false);
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-tighter shadow-xl shadow-blue-200 transition-all animate-in slide-in-from-right-4"
+                                >
+                                    Confirmar Asiento
+                                </button>
+                            )}
                         </footer>
                     </div>
                 </div>
