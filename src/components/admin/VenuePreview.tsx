@@ -99,7 +99,7 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                                     >
                                         {config.type === 'SEATED' 
                                             ? `${config.blocks.reduce((acc: number, b: any) => acc + (b.rows * b.seatsPerRow), 0)} Asientos`
-                                            : `Cap: ${config.max_capacity || 0}`
+                                            : `Cap: ${config.maxCapacity || 0}`
                                         }
                                     </text>
                                 )}

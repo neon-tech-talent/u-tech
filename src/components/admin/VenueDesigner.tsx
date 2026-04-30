@@ -320,8 +320,8 @@ export default function VenueDesigner() {
                                             type="number" 
                                             placeholder="Ej: 500"
                                             className="w-full bg-white border-none rounded-2xl px-6 py-5 text-xl font-black text-slate-900 outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all shadow-sm"
-                                            value={zones[selectedZone].max_capacity || ""}
-                                            onChange={(e) => updateZone(selectedZone, { max_capacity: parseInt(e.target.value) || 0 })}
+                                            value={zones[selectedZone].maxCapacity || ""}
+                                            onChange={(e) => updateZone(selectedZone, { maxCapacity: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
                                 )}
