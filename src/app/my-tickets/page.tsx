@@ -10,6 +10,7 @@ export default function MyTicketsPage() {
     const [user, setUser] = useState<any>(null);
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [role, setRole] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchUserAndTickets = async () => {
@@ -21,6 +22,14 @@ export default function MyTicketsPage() {
             }
 
             setUser(user);
+
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            setRole(profile?.role || 'CUSTOMER');
+
+            if (profile?.role === 'SCANNER') {
+                setLoading(false);
+                return;
+            }
 
             const { data: ticketsData, error } = await supabase
                 .from("tickets")
@@ -62,6 +71,23 @@ export default function MyTicketsPage() {
                 <p className="text-slate-500 mb-6 font-medium">Debes iniciar sesión para ver tus entradas compradas.</p>
                 <Link href="/login" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200">
                     Ir a Iniciar Sesión
+                </Link>
+            </div>
+        );
+    }
+
+    if (role === 'SCANNER') {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-[32px] flex items-center justify-center mb-6">
+                    <Ticket className="w-10 h-10" />
+                </div>
+                <h1 className="text-3xl font-black text-slate-900 mb-2">Acceso Restringido</h1>
+                <p className="text-slate-500 max-w-sm mb-8 font-medium">
+                    Como Boletero no tienes acceso a la sección de compra de tickets ni a tus entradas personales desde aquí.
+                </p>
+                <Link href="/admin/scanner" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                    Ir a Boletería
                 </Link>
             </div>
         );

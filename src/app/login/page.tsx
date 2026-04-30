@@ -29,7 +29,18 @@ function LoginForm() {
 
             if (signInError) throw signInError;
 
-            router.push(redirectTo);
+            // Fetch user profile to check role
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", data.user?.id)
+                .single();
+
+            if (profile?.role === 'SCANNER') {
+                router.push('/admin/scanner');
+            } else {
+                router.push(redirectTo);
+            }
         } catch (err: any) {
             setError(err.message === "Invalid login credentials"
                 ? "Credenciales incorrectas o correo sin verificar."
