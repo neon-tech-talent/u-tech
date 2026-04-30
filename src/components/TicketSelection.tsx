@@ -259,18 +259,31 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                             key={si}
                                                                             disabled={!isAvailable}
                                                                             onClick={() => {
-                                                                                if (seat) {
+                                                                                console.log("Seat clicked:", seat.id, "Row:", rowName, "Num:", seatNum);
+                                                                                try {
                                                                                     setSelectedSeat(seat.id);
-                                                                                    // Find ticket type for this zone
+                                                                                    
                                                                                     const ez = eventZones.find(z => z.id === selectedSection);
+                                                                                    console.log("Zone for seat:", ez?.name);
+                                                                                    
                                                                                     if (ez) {
                                                                                         const type = ticketTypes.find(t => 
                                                                                             t.name.toLowerCase().includes(ez.name.toLowerCase())
                                                                                         );
+                                                                                        console.log("Found ticket type:", type?.name);
+                                                                                        
                                                                                         if (type) {
                                                                                             setCart({ [type.id]: 1 });
+                                                                                            console.log("Cart updated with type:", type.id);
+                                                                                        } else {
+                                                                                            console.warn("No ticket type found for zone:", ez.name);
                                                                                         }
                                                                                     }
+                                                                                    
+                                                                                    // Pequeño delay para que el usuario vea el cambio de color antes de cerrar
+                                                                                    setTimeout(() => setShowMap(false), 200);
+                                                                                } catch (err) {
+                                                                                    console.error("Error in seat selection:", err);
                                                                                     setShowMap(false);
                                                                                 }
                                                                             }}
