@@ -90,7 +90,9 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
 
     const fetchSeatingData = async () => {
         // Fetch event zones
-        const { data: zonesData } = await supabase.from("event_zones").select("*").eq("event_id", event.id);
+        const { data: zonesData, error: zonesError } = await supabase.from("event_zones").select("*").eq("event_id", event.id);
+        if (zonesError) console.error("Error fetching zones:", zonesError);
+        console.log("Zones found:", zonesData?.length || 0);
         setEventZones(zonesData || []);
 
         if (event.location_type === 'SEATED_MAP' && zonesData && zonesData.length > 0) {
@@ -103,10 +105,19 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
         }
 
         const { data: sectionsData } = await supabase.from("sections").select("*").eq("event_id", event.id);
-        const { data: seatsData } = await supabase.from("seats").select("*").in("section_id", sectionsData?.map(s => s.id) || []);
+        const sectionIds = sectionsData?.map(s => s.id) || [];
+        const { data: seatsData } = await supabase.from("seats").select("*").in("section_id", sectionIds.length > 0 ? sectionIds : ['none']);
         
         // Also fetch seats linked to event zones
-        const { data: zoneSeats } = await supabase.from("seats").select("*").in("event_zone_id", zonesData?.map(z => z.id) || []);
+        const zoneIds = zonesData?.map(z => z.id) || [];
+        console.log("Fetching seats for zone IDs:", zoneIds);
+        const { data: zoneSeats, error: seatsError } = await supabase
+            .from("seats")
+            .select("*")
+            .in("event_zone_id", zoneIds.length > 0 ? zoneIds : ['none']);
+        
+        if (seatsError) console.error("Error fetching zone seats:", seatsError);
+        console.log("Zone seats found:", zoneSeats?.length || 0);
         
         setSections(sectionsData || []);
         setSeats([...(seatsData || []), ...(zoneSeats || [])]);
