@@ -20,6 +20,22 @@ export default function NewEvent() {
     const [generalCapacity, setGeneralCapacity] = useState(1000);
     const [serviceChargePercent, setServiceChargePercent] = useState(0);
     const [sections, setSections] = useState<{ name: string; rows: number; seatsPerRow: number; price: number }[]>([]);
+    const [venueLayouts, setVenueLayouts] = useState<any[]>([]);
+    const [selectedLayoutId, setSelectedLayoutId] = useState<string>("");
+    const [layoutPrices, setLayoutPrices] = useState<Record<string, number>>({});
+
+    // Cargar layouts al montar o al cambiar tipo a MAPA
+    const fetchLayouts = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', session?.user.id).single();
+        
+        const { data } = await supabase
+            .from('venue_layouts')
+            .select('*')
+            .eq('company_id', profile?.company_id);
+        
+        setVenueLayouts(data || []);
+    };
 
     const handleAddSection = () => {
         setSections([...sections, { name: "", rows: 1, seatsPerRow: 1, price: 0 }]);
@@ -75,11 +91,14 @@ export default function NewEvent() {
                 finalVenueMapUrl = await handleUpload(venueMapFile, 'maps');
             }
 
+            const { data: { session } } = await supabase.auth.getSession();
+            const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', session?.user.id).single();
+
             // 1. Create Event
             const { data: event, error: eventError } = await supabase
                 .from("events")
                 .insert({
-                    company_id: 'd9b32c6b-2c6b-4e1b-bc6b-2c6b2c6b2c6b',
+                    company_id: profile?.company_id,
                     name,
                     description,
                     event_date: new Date(date).toISOString(),
@@ -91,14 +110,16 @@ export default function NewEvent() {
                     venue_map_url: finalVenueMapUrl,
                     is_featured: isFeatured,
                     service_charge_percent: serviceChargePercent,
-                    total_capacity: locationType === 'GENERAL' ? generalCapacity : sections.reduce((acc: number, s: any) => acc + (s.rows * s.seatsPerRow), 0)
+                    total_capacity: locationType === 'GENERAL' ? generalCapacity : 
+                                   locationType === 'SEATED_SIMPLE' ? sections.reduce((acc: number, s: any) => acc + (s.rows * s.seatsPerRow), 0) :
+                                   venueLayouts.find(l => l.id === selectedLayoutId)?.zones_config ? Object.values(venueLayouts.find(l => l.id === selectedLayoutId).zones_config).reduce((acc: number, z: any) => acc + (z.active && !z.isStage ? (z.type === 'SEATED' ? z.blocks.reduce((ba: number, b: any) => ba + (b.rows * b.seatsPerRow), 0) : (z.maxCapacity || 0)) : 0), 0) : 0
                 })
                 .select()
                 .single();
 
             if (eventError) throw eventError;
 
-            // 2. Create Ticket Types / Sections
+            // 2. Create Ticket Types / Sections / Map Zones
             if (locationType === 'GENERAL') {
                 await supabase.from("ticket_types").insert({
                     event_id: event.id,
@@ -106,7 +127,7 @@ export default function NewEvent() {
                     price: generalPrice,
                     stock: generalCapacity
                 });
-            } else {
+            } else if (locationType === 'SEATED_SIMPLE') {
                 for (const sectionData of sections) {
                     const { data: section, error: secError } = await supabase
                         .from("sections")
@@ -120,7 +141,6 @@ export default function NewEvent() {
 
                     if (secError) throw secError;
 
-                    // Create a ticket type for this section
                     await supabase.from("ticket_types").insert({
                         event_id: event.id,
                         name: `Entrada - ${sectionData.name}`,
@@ -139,9 +159,66 @@ export default function NewEvent() {
                             });
                         }
                     }
+                    await supabase.from("seats").insert(seatsToInsert);
+                }
+            } else if (locationType === 'SEATED_MAP') {
+                const layout = venueLayouts.find(l => l.id === selectedLayoutId);
+                if (!layout) throw new Error("Debes seleccionar un mapa");
 
-                    const { error: seatsError } = await supabase.from("seats").insert(seatsToInsert);
-                    if (seatsError) throw seatsError;
+                for (const [zoneName, config] of Object.entries(layout.zones_config as any)) {
+                    const zone = config as any;
+                    if (!zone.active) continue;
+
+                    // 1. Crear Event Zone
+                    const { data: eventZone, error: ezError } = await supabase
+                        .from('event_zones')
+                        .insert({
+                            event_id: event.id,
+                            venue_layout_id: layout.id,
+                            name: zoneName,
+                            type: zone.type,
+                            max_capacity: zone.maxCapacity || 0,
+                            is_stage: zone.isStage
+                        })
+                        .select()
+                        .single();
+
+                    if (ezError) throw ezError;
+
+                    // 2. Crear Ticket Type para la zona (si no es escenario)
+                    if (!zone.isStage) {
+                        const price = layoutPrices[zoneName] || 0;
+                        const stock = zone.type === 'SEATED' 
+                            ? zone.blocks.reduce((acc: number, b: any) => acc + (b.rows * b.seatsPerRow), 0)
+                            : zone.maxCapacity || 0;
+
+                        await supabase.from("ticket_types").insert({
+                            event_id: event.id,
+                            name: `Entrada - ${zoneName}`,
+                            price,
+                            stock
+                        });
+
+                        // 3. Generar Asientos si es SEATED
+                        if (zone.type === 'SEATED' && zone.blocks) {
+                            const seatsToInsert = [];
+                            for (const block of zone.blocks) {
+                                for (let r = 1; r <= block.rows; r++) {
+                                    for (let s = 1; s <= block.seatsPerRow; s++) {
+                                        seatsToInsert.push({
+                                            event_zone_id: eventZone.id,
+                                            row_name: String.fromCharCode(64 + r),
+                                            seat_number: (block.seatsPerRow - s + 1).toString(), // Derecha a Izquierda
+                                            status: 'AVAILABLE'
+                                        });
+                                    }
+                                }
+                            }
+                            if (seatsToInsert.length > 0) {
+                                await supabase.from("seats").insert(seatsToInsert);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -337,17 +414,24 @@ export default function NewEvent() {
                     <div className="space-y-4">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Tipo de Localidad</label>
                         <div className="grid grid-cols-3 gap-4">
-                            {['GENERAL', 'SEATED_SIMPLE', 'SEATED_MAP'].map((type) => (
+                            {[
+                                { id: 'GENERAL', label: 'GENERAL' },
+                                { id: 'SEATED_SIMPLE', label: 'UBICACIÓN SIMPLE' },
+                                { id: 'SEATED_MAP', label: 'MAPA' }
+                            ].map((type) => (
                                 <button
-                                    key={type}
+                                    key={type.id}
                                     type="button"
-                                    onClick={() => setLocationType(type)}
-                                    className={`py-4 rounded-2xl font-bold text-sm transition-all border-2 ${locationType === type
+                                    onClick={() => {
+                                        setLocationType(type.id);
+                                        if (type.id === 'SEATED_MAP') fetchLayouts();
+                                    }}
+                                    className={`py-4 rounded-2xl font-bold text-sm transition-all border-2 ${locationType === type.id
                                         ? 'border-blue-600 bg-blue-50 text-blue-600'
                                         : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
                                         }`}
                                 >
-                                    {type.replace('_', ' ')}
+                                    {type.label}
                                 </button>
                             ))}
                         </div>
@@ -382,7 +466,7 @@ export default function NewEvent() {
                     )}
                 </div>
 
-                {(locationType === 'SEATED_SIMPLE' || locationType === 'SEATED_MAP') && (
+                {locationType === 'SEATED_SIMPLE' && (
                     <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8 animate-in fade-in slide-in-from-top-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-black text-slate-900">Configuración de Sectores</h2>
@@ -452,6 +536,52 @@ export default function NewEvent() {
                                 </p>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {locationType === 'SEATED_MAP' && (
+                    <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 space-y-8 animate-in fade-in slide-in-from-top-4">
+                        <div className="space-y-4">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Seleccionar Mapa de Recinto</label>
+                            <select 
+                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold appearance-none cursor-pointer"
+                                value={selectedLayoutId}
+                                onChange={(e) => setSelectedLayoutId(e.target.value)}
+                            >
+                                <option value="">Selecciona un diseño...</option>
+                                {venueLayouts.map(l => (
+                                    <option key={l.id} value={l.id}>{l.name} ({l.shape})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {selectedLayoutId && (
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest pl-2 border-t border-slate-50 pt-6">Asignar Precios por Zona</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {Object.entries(venueLayouts.find(l => l.id === selectedLayoutId)?.zones_config || {}).map(([name, config]: [string, any]) => (
+                                        config.active && !config.isStage && (
+                                            <div key={name} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-black text-slate-900 uppercase">{name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">{config.type}</p>
+                                                </div>
+                                                <div className="relative w-32">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">$</span>
+                                                    <input 
+                                                        type="number" 
+                                                        className="w-full pl-8 pr-4 py-2 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
+                                                        value={layoutPrices[name] || ""}
+                                                        onChange={(e) => setLayoutPrices({...layoutPrices, [name]: parseFloat(e.target.value) || 0})}
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
