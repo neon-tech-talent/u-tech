@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const navItems = [
         { href: "/admin", icon: LayoutDashboard, label: "Dashboard", allowed: ["ADMIN", "SUPERADMIN"] },
         { href: "/admin/events", icon: Calendar, label: "Eventos", allowed: ["ADMIN", "SUPERADMIN"] },
+        { href: "/admin/venue-map", icon: Scan, label: "Mapa de Recinto", allowed: ["ADMIN", "SUPERADMIN"] },
         { href: "/admin/stats", icon: BarChart3, label: "Estadísticas", allowed: ["ADMIN", "SUPERADMIN"] },
         { href: "/admin/scanner", icon: Scan, label: "Escanear QR", allowed: ["ADMIN", "SUPERADMIN", "SCANNER"] },
         { href: "/admin/settings", icon: Settings, label: "Config", allowed: ["ADMIN", "SUPERADMIN"] },
