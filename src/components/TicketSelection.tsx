@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Minus, Ticket, Armchair } from "lucide-react";
+import { Plus, Minus, Ticket, Armchair, X, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import VenuePreview from "./admin/VenuePreview";
+import { cn } from "@/lib/utils";
 
 interface TicketType {
     id: string;
@@ -42,6 +44,11 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     const [selectedSection, setSelectedSection] = useState<string>("");
     const [selectedRow, setSelectedRow] = useState<string>("");
     const [selectedSeat, setSelectedSeat] = useState<string>("");
+
+    const [venueLayout, setVenueLayout] = useState<any>(null);
+    const [activeZoneKey, setActiveZoneKey] = useState<string | null>(null);
+    const [eventZones, setEventZones] = useState<any[]>([]);
+    const [showMap, setShowMap] = useState(false);
 
     const router = useRouter();
 
@@ -81,10 +88,27 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     };
 
     const fetchSeatingData = async () => {
+        // Fetch event zones
+        const { data: zonesData } = await supabase.from("event_zones").select("*").eq("event_id", event.id);
+        setEventZones(zonesData || []);
+
+        if (event.location_type === 'SEATED_MAP' && zonesData && zonesData.length > 0) {
+            // Fetch venue layout from the first zone that has it
+            const layoutId = zonesData.find(z => z.venue_layout_id)?.venue_layout_id;
+            if (layoutId) {
+                const { data: layout } = await supabase.from("venue_layouts").select("*").eq("id", layoutId).single();
+                setVenueLayout(layout);
+            }
+        }
+
         const { data: sectionsData } = await supabase.from("sections").select("*").eq("event_id", event.id);
         const { data: seatsData } = await supabase.from("seats").select("*").in("section_id", sectionsData?.map(s => s.id) || []);
+        
+        // Also fetch seats linked to event zones
+        const { data: zoneSeats } = await supabase.from("seats").select("*").in("event_zone_id", zonesData?.map(z => z.id) || []);
+        
         setSections(sectionsData || []);
-        setSeats(seatsData || []);
+        setSeats([...(seatsData || []), ...(zoneSeats || [])]);
     };
 
     const handleUpdateQuantity = (typeId: string, delta: number, max: number) => {
@@ -124,7 +148,32 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
 
     return (
         <div className="space-y-8">
-            {event.venue_map_url && (
+            {event.location_type === 'SEATED_MAP' && venueLayout && (
+                <div className="bg-slate-900 rounded-[40px] p-10 shadow-2xl relative overflow-hidden flex flex-col items-center">
+                    <div className="absolute top-8 left-8">
+                        <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">
+                            Mapa Interactivo
+                        </span>
+                    </div>
+                    <div className="w-full max-w-[500px]">
+                        <VenuePreview 
+                            shape={venueLayout.shape} 
+                            zones={venueLayout.zones_config} 
+                            onZoneClick={(name) => {
+                                const ez = eventZones.find(z => z.name === name);
+                                if (ez) {
+                                    setActiveZoneKey(name);
+                                    setSelectedSection(ez.id); // Reusing selectedSection for zoneId in map mode
+                                    setShowMap(true);
+                                }
+                            }}
+                        />
+                    </div>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-6">Haz clic en una zona para ver los asientos</p>
+                </div>
+            )}
+
+            {event.venue_map_url && event.location_type !== 'SEATED_MAP' && (
                 <div className="bg-white rounded-[32px] overflow-hidden border border-slate-100 mb-8 aspect-video relative group">
                     <img
                         src={event.venue_map_url}
@@ -137,7 +186,120 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                 </div>
             )}
 
-            {event.location_type !== 'GENERAL' && (
+            {showMap && activeZoneKey && (
+                <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-full">
+                        <header className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 uppercase">Zona: {activeZoneKey}</h3>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-blue-600" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponible</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-slate-200" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupado</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tu Selección</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowMap(false)}
+                                className="p-4 hover:bg-white rounded-2xl transition-all group"
+                            >
+                                <X className="w-6 h-6 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                            </button>
+                        </header>
+
+                        <div className="flex-1 overflow-auto p-8 md:p-12 custom-scrollbar">
+                            <div className="space-y-12">
+                                {venueLayout?.zones_config[activeZoneKey]?.blocks?.map((block: any, bi: number) => {
+                                    const blockSeats = seats.filter(s => 
+                                        s.event_zone_id === selectedSection && 
+                                        // Filter seats belonging to this block (based on row range if we had it, 
+                                        // but since they are all in one zone, we just render them all in blocks for UI)
+                                        // Actually, let's just render the grid of the block and match seats by row/number
+                                        true
+                                    );
+
+                                    return (
+                                        <div key={bi} className="space-y-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-[2px] flex-1 bg-slate-100" />
+                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Bloque #{bi + 1}</span>
+                                                <div className="h-[2px] flex-1 bg-slate-100" />
+                                            </div>
+                                            <div className="flex flex-col gap-3 items-center overflow-x-auto pb-4">
+                                                {Array.from({ length: block.rows }).map((_, ri) => {
+                                                    const rowName = String.fromCharCode(64 + ri + 1);
+                                                    return (
+                                                        <div key={ri} className="flex gap-2 items-center min-w-max">
+                                                            <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
+                                                            <div className="flex gap-1.5">
+                                                                {Array.from({ length: block.seatsPerRow }).map((_, si) => {
+                                                                    const seatNum = (block.seatsPerRow - si).toString();
+                                                                    const seat = seats.find(s => 
+                                                                        s.event_zone_id === selectedSection && 
+                                                                        s.row_name === rowName && 
+                                                                        s.seat_number === seatNum
+                                                                    );
+                                                                    
+                                                                    const isSold = seat?.status === 'SOLD';
+                                                                    const isReserved = seat?.status === 'RESERVED' && seat.reserved_until && new Date(seat.reserved_until) > new Date();
+                                                                    const isSelected = selectedSeat === seat?.id;
+                                                                    const isAvailable = seat && !isSold && !isReserved;
+
+                                                                    return (
+                                                                        <button
+                                                                            key={si}
+                                                                            disabled={!isAvailable}
+                                                                            onClick={() => {
+                                                                                if (seat) {
+                                                                                    setSelectedSeat(seat.id);
+                                                                                    // Find ticket type for this zone
+                                                                                    const ez = eventZones.find(z => z.id === selectedSection);
+                                                                                    const type = ticketTypes.find(t => t.name.includes(ez.name));
+                                                                                    if (type) {
+                                                                                        setCart({ [type.id]: 1 });
+                                                                                    }
+                                                                                    setShowMap(false);
+                                                                                }
+                                                                            }}
+                                                                            className={cn(
+                                                                                "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
+                                                                                isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
+                                                                                isSelected ? "bg-red-500 text-white shadow-lg shadow-red-200 ring-2 ring-red-200" :
+                                                                                "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
+                                                                            )}
+                                                                            title={`Fila ${rowName}, Asiento ${seatNum}`}
+                                                                        >
+                                                                            {isSelected ? <Check className="w-4 h-4" /> : seatNum}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <footer className="p-8 border-t border-slate-100 bg-slate-50 flex justify-center">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escenario / Pantalla en esta dirección ↑</p>
+                        </footer>
+                    </div>
+                </div>
+            )}
+
+            {event.location_type === 'SEATED_SIMPLE' && (
                 <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 space-y-6">
                     <div className="flex items-center gap-2 mb-2">
                         <Armchair className="w-5 h-5 text-blue-600" />
@@ -197,8 +359,10 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                         if (event.location_type === 'GENERAL') return true;
                         if (!selectedSection) return false;
                         const section = sections.find(s => s.id === selectedSection);
-                        if (!section || !section.name || !type.name) return false;
-                        return type.name.toLowerCase().includes(section.name.toLowerCase());
+                        const eventZone = eventZones.find(z => z.id === selectedSection);
+                        const sectionName = section?.name || eventZone?.name;
+                        if (!sectionName || !type.name) return false;
+                        return type.name.toLowerCase().includes(sectionName.toLowerCase());
                     })
                     .map((type) => {
                         const sold = soldCounts[type.id] || 0;

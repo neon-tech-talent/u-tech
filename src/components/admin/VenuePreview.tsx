@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface VenuePreviewProps {
     shape: 'OVAL' | 'RECT_H' | 'RECT_V' | 'SEMICIRCLE';
     zones: any;
+    onZoneClick?: (zoneName: string) => void;
 }
 
-export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
+export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreviewProps) {
     // Contenedor principal de 600x600 (coord sistema)
     
     const getShapePath = () => {
@@ -89,17 +90,27 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                 {Object.entries(zones).map(([key, config]: [string, any]) => {
                     if (!config.active) return null;
                     const pos = (zonePositions as any)[key];
+                    const isClickable = !config.isStage && onZoneClick;
                     
                     return (
-                        <g key={key} className="transition-all duration-500">
+                        <g 
+                            key={key} 
+                            className={cn(
+                                "transition-all duration-500",
+                                isClickable ? "cursor-pointer group/zone" : ""
+                            )}
+                            onClick={() => isClickable && onZoneClick(key)}
+                        >
                             {/* Fondo de la zona */}
                             <circle 
                                 cx={pos.x} 
                                 cy={pos.y} 
-                                r="40" 
+                                r="45" 
                                 className={cn(
                                     "transition-all duration-500",
-                                    config.isStage ? "fill-green-500/20 stroke-green-500" : "fill-blue-500/10 stroke-blue-500/50",
+                                    config.isStage 
+                                        ? "fill-green-500/20 stroke-green-500" 
+                                        : "fill-blue-500/10 stroke-blue-500/50 group-hover/zone:fill-blue-500/30 group-hover/zone:stroke-blue-500",
                                     "stroke-2 stroke-dasharray-4"
                                 )} 
                                 style={{ strokeDasharray: "4 4" }}
@@ -115,7 +126,7 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                                     rx="10" 
                                     className={cn(
                                         "transition-all duration-500",
-                                        config.isStage ? "fill-green-600 shadow-lg" : "fill-slate-800"
+                                        config.isStage ? "fill-green-600 shadow-lg" : "fill-slate-800 group-hover/zone:fill-blue-600"
                                     )} 
                                 />
                                 <text 
@@ -129,9 +140,9 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                                 {/* Info adicional */}
                                 {!config.isStage && (
                                     <text 
-                                        y="20" 
+                                        y="25" 
                                         textAnchor="middle" 
-                                        className="fill-slate-400 text-[6px] font-black uppercase tracking-widest"
+                                        className="fill-slate-400 text-[6px] font-black uppercase tracking-widest group-hover/zone:fill-blue-400 transition-colors"
                                     >
                                         {config.type === 'SEATED' 
                                             ? `${config.blocks.reduce((acc: number, b: any) => acc + (b.rows * b.seatsPerRow), 0)} Asientos`
