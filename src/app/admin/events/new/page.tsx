@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Save, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Save, ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import VenuePreview from "@/components/admin/VenuePreview";
+import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 export default function NewEvent() {
     const router = useRouter();
@@ -23,6 +26,12 @@ export default function NewEvent() {
     const [venueLayouts, setVenueLayouts] = useState<any[]>([]);
     const [selectedLayoutId, setSelectedLayoutId] = useState<string>("");
     const [layoutPrices, setLayoutPrices] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        if (locationType === 'SEATED_MAP') {
+            fetchLayouts();
+        }
+    }, [locationType]);
 
     // Cargar layouts al montar o al cambiar tipo a MAPA
     const fetchLayouts = async () => {
@@ -424,7 +433,6 @@ export default function NewEvent() {
                                     type="button"
                                     onClick={() => {
                                         setLocationType(type.id);
-                                        if (type.id === 'SEATED_MAP') fetchLayouts();
                                     }}
                                     className={`py-4 rounded-2xl font-bold text-sm transition-all border-2 ${locationType === type.id
                                         ? 'border-blue-600 bg-blue-50 text-blue-600'
@@ -555,30 +563,54 @@ export default function NewEvent() {
                             </select>
                         </div>
 
-                        {selectedLayoutId && (
-                            <div className="space-y-6">
-                                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest pl-2 border-t border-slate-50 pt-6">Asignar Precios por Zona</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {Object.entries(venueLayouts.find(l => l.id === selectedLayoutId)?.zones_config || {}).map(([name, config]: [string, any]) => (
-                                        config.active && !config.isStage && (
-                                            <div key={name} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                                <div className="flex-1">
-                                                    <p className="text-xs font-black text-slate-900 uppercase">{name}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">{config.type}</p>
+                        {selectedLayoutId && venueLayouts.find(l => l.id === selectedLayoutId) && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                                {/* Vista Previa del Mapa */}
+                                <div className="bg-slate-900 rounded-[32px] p-8 aspect-square flex items-center justify-center shadow-xl">
+                                    <VenuePreview 
+                                        shape={venueLayouts.find(l => l.id === selectedLayoutId).shape} 
+                                        zones={venueLayouts.find(l => l.id === selectedLayoutId).zones_config} 
+                                    />
+                                </div>
+
+                                {/* Asignación de Precios */}
+                                <div className="space-y-6">
+                                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest pl-2">Asignar Precios por Zona</h3>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {Object.entries(venueLayouts.find(l => l.id === selectedLayoutId).zones_config).map(([name, config]: [string, any]) => (
+                                            config.active && !config.isStage && (
+                                                <div key={name} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-sm">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs font-black text-slate-900 uppercase">{name}</p>
+                                                            <span className={cn(
+                                                                "text-[8px] px-1.5 py-0.5 rounded-full font-black text-white uppercase",
+                                                                config.type === 'SEATED' ? "bg-blue-500" : "bg-purple-500"
+                                                            )}>
+                                                                {config.type}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                                                            {config.type === 'SEATED' 
+                                                                ? `${config.blocks.reduce((acc: number, b: any) => acc + (b.rows * b.seatsPerRow), 0)} Asientos`
+                                                                : `Cap: ${config.maxCapacity || 0}`
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <div className="relative w-32">
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
+                                                            value={layoutPrices[name] || ""}
+                                                            onChange={(e) => setLayoutPrices({...layoutPrices, [name]: parseFloat(e.target.value) || 0})}
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="relative w-32">
-                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">$</span>
-                                                    <input 
-                                                        type="number" 
-                                                        className="w-full pl-8 pr-4 py-2 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
-                                                        value={layoutPrices[name] || ""}
-                                                        onChange={(e) => setLayoutPrices({...layoutPrices, [name]: parseFloat(e.target.value) || 0})}
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )
-                                    ))}
+                                            )
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -598,4 +630,3 @@ export default function NewEvent() {
     );
 }
 
-function Loader2({ className }: { className?: string }) { return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>; }
