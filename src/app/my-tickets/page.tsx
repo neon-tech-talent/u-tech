@@ -26,7 +26,7 @@ export default function MyTicketsPage() {
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
             setRole(profile?.role || 'CUSTOMER');
 
-            if (profile?.role === 'SCANNER') {
+            if (profile?.role === 'SCANNER' || profile?.role === 'ADMIN') {
                 setLoading(false);
                 return;
             }
@@ -76,7 +76,7 @@ export default function MyTicketsPage() {
         );
     }
 
-    if (role === 'SCANNER') {
+    if (role === 'SCANNER' || role === 'ADMIN') {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
                 <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-[32px] flex items-center justify-center mb-6">
@@ -84,10 +84,10 @@ export default function MyTicketsPage() {
                 </div>
                 <h1 className="text-3xl font-black text-slate-900 mb-2">Acceso Restringido</h1>
                 <p className="text-slate-500 max-w-sm mb-8 font-medium">
-                    Como Boletero no tienes acceso a la sección de compra de tickets ni a tus entradas personales desde aquí.
+                    Como {role === 'SCANNER' ? 'Boletero' : 'Administrador'} no tienes acceso a la sección de compra de tickets ni a tus entradas personales desde aquí.
                 </p>
-                <Link href="/admin/scanner" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-                    Ir a Boletería
+                <Link href={role === 'SCANNER' ? "/admin/scanner" : "/admin"} className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                    Ir al {role === 'SCANNER' ? "Escáner" : "Panel Empresa"}
                 </Link>
             </div>
         );

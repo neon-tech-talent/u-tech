@@ -59,7 +59,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-1 md:gap-4">
                     {session ? (
                         <>
-                            {role !== 'SCANNER' && (
+                            {role !== 'SCANNER' && role !== 'ADMIN' && (
                                 <Link
                                     href="/my-tickets"
                                     className="flex flex-col items-center justify-center p-2 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"

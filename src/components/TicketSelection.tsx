@@ -231,7 +231,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                     )}
                                 </div>
 
-                                <div className={`flex items-center gap-4 bg-slate-100 p-2 rounded-xl transition-opacity ${isSoldOut || userRole === 'SCANNER' ? 'opacity-30 pointer-events-none' : ''}`}>
+                                <div className={`flex items-center gap-4 bg-slate-100 p-2 rounded-xl transition-opacity ${isSoldOut || userRole === 'SCANNER' || userRole === 'ADMIN' ? 'opacity-30 pointer-events-none' : ''}`}>
                                     <button
                                         onClick={() => handleUpdateQuantity(type.id, -1, remaining)}
                                         className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600 disabled:opacity-30"
@@ -258,7 +258,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                 )}
             </div>
 
-            {(totalItems > 0 && (event.location_type === 'GENERAL' || selectedSeat)) && userRole !== 'SCANNER' && (
+            {(totalItems > 0 && (event.location_type === 'GENERAL' || selectedSeat)) && (userRole !== 'SCANNER' && userRole !== 'ADMIN') && (
                 <div className="mt-8 bg-slate-900 rounded-2xl p-6 text-white space-y-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <div className="flex items-center justify-between border-b border-white/10 pb-4">
                         <div>
@@ -286,9 +286,11 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                 </div>
             )}
 
-            {userRole === 'SCANNER' && (
+            {(userRole === 'SCANNER' || userRole === 'ADMIN') && (
                 <div className="mt-8 bg-blue-50 border border-blue-100 p-6 rounded-[32px] text-center">
-                    <p className="text-blue-600 font-bold">Como Boletero/Scanner, no tienes permisos para realizar compras.</p>
+                    <p className="text-blue-600 font-bold">
+                        Como {userRole === 'SCANNER' ? 'Boletero' : 'Administrador'}, no tienes permisos para realizar compras.
+                    </p>
                 </div>
             )}
 
