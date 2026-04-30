@@ -215,27 +215,27 @@ export default function VenueDesigner() {
                                     <button
                                         onClick={() => updateZone(selectedZone, { type: 'SEATED' })}
                                         className={cn(
-                                            "flex items-center gap-4 p-6 rounded-[24px] border-2 transition-all",
+                                            "flex items-center gap-3 p-5 rounded-[24px] border-2 transition-all",
                                             zones[selectedZone].type === 'SEATED' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
                                         )}
                                     >
-                                        <div className="bg-white p-3 rounded-xl shadow-sm"><Gamepad2 className="w-6 h-6" /></div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-black uppercase">Asientos</p>
-                                            <p className="text-[10px] opacity-60">Filas y columnas fijas</p>
+                                        <div className="bg-white p-2.5 rounded-xl shadow-sm shrink-0"><Gamepad2 className="w-5 h-5" /></div>
+                                        <div className="text-left overflow-hidden">
+                                            <p className="text-xs font-black uppercase truncate">Asientos</p>
+                                            <p className="text-[9px] opacity-60 leading-tight">Filas y columnas</p>
                                         </div>
                                     </button>
                                     <button
                                         onClick={() => updateZone(selectedZone, { type: 'STANDING' })}
                                         className={cn(
-                                            "flex items-center gap-4 p-6 rounded-[24px] border-2 transition-all",
+                                            "flex items-center gap-3 p-5 rounded-[24px] border-2 transition-all",
                                             zones[selectedZone].type === 'STANDING' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
                                         )}
                                     >
-                                        <div className="bg-white p-3 rounded-xl shadow-sm"><Users className="w-6 h-6" /></div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-black uppercase">Campo / Pie</p>
-                                            <p className="text-[10px] opacity-60">Capacidad libre</p>
+                                        <div className="bg-white p-2.5 rounded-xl shadow-sm shrink-0"><Users className="w-5 h-5" /></div>
+                                        <div className="text-left overflow-hidden">
+                                            <p className="text-xs font-black uppercase truncate">Campo / Pie</p>
+                                            <p className="text-[9px] opacity-60 leading-tight">Capacidad libre</p>
                                         </div>
                                     </button>
                                 </div>

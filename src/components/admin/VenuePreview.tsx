@@ -25,14 +25,50 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
         }
     };
 
-    // Coordenadas aproximadas para las etiquetas de las zonas
-    const zonePositions: Record<string, { x: number, y: number }> = {
-        'Centro': { x: 300, y: 300 },
-        'Arriba': { x: 300, y: 150 },
-        'Abajo': { x: 300, y: 450 },
-        'Izquierda': { x: 150, y: 300 },
-        'Derecha': { x: 450, y: 300 },
+    // Coordenadas dinámicas para las etiquetas según la forma
+    const getZonePositions = () => {
+        const base = {
+            'Centro': { x: 300, y: 300 },
+            'Arriba': { x: 300, y: 150 },
+            'Abajo': { x: 300, y: 450 },
+            'Izquierda': { x: 150, y: 300 },
+            'Derecha': { x: 450, y: 300 },
+        };
+
+        if (shape === 'SEMICIRCLE') {
+            return {
+                'Centro': { x: 300, y: 420 },
+                'Arriba': { x: 300, y: 320 },
+                'Abajo': { x: 300, y: 480 },
+                'Izquierda': { x: 180, y: 430 },
+                'Derecha': { x: 420, y: 430 },
+            };
+        }
+
+        if (shape === 'RECT_V') {
+            return {
+                'Centro': { x: 300, y: 300 },
+                'Arriba': { x: 300, y: 100 },
+                'Abajo': { x: 300, y: 500 },
+                'Izquierda': { x: 160, y: 300 },
+                'Derecha': { x: 440, y: 300 },
+            };
+        }
+
+        if (shape === 'OVAL') {
+            return {
+                'Centro': { x: 300, y: 300 },
+                'Arriba': { x: 300, y: 160 },
+                'Abajo': { x: 300, y: 440 },
+                'Izquierda': { x: 130, y: 300 },
+                'Derecha': { x: 470, y: 300 },
+            };
+        }
+
+        return base;
     };
+
+    const zonePositions = getZonePositions();
 
     return (
         <div className="w-full aspect-square max-w-[600px] flex items-center justify-center">
@@ -52,7 +88,7 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                 {/* Render de Zonas */}
                 {Object.entries(zones).map(([key, config]: [string, any]) => {
                     if (!config.active) return null;
-                    const pos = zonePositions[key];
+                    const pos = (zonePositions as any)[key];
                     
                     return (
                         <g key={key} className="transition-all duration-500">
@@ -60,7 +96,7 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                             <circle 
                                 cx={pos.x} 
                                 cy={pos.y} 
-                                r="45" 
+                                r="40" 
                                 className={cn(
                                     "transition-all duration-500",
                                     config.isStage ? "fill-green-500/20 stroke-green-500" : "fill-blue-500/10 stroke-blue-500/50",
@@ -72,11 +108,11 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                             {/* Etiqueta */}
                             <g transform={`translate(${pos.x}, ${pos.y})`}>
                                 <rect 
-                                    x="-40" 
-                                    y="-12" 
-                                    width="80" 
-                                    height="24" 
-                                    rx="12" 
+                                    x="-35" 
+                                    y="-10" 
+                                    width="70" 
+                                    height="20" 
+                                    rx="10" 
                                     className={cn(
                                         "transition-all duration-500",
                                         config.isStage ? "fill-green-600 shadow-lg" : "fill-slate-800"
@@ -85,7 +121,7 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                                 <text 
                                     textAnchor="middle" 
                                     dominantBaseline="middle" 
-                                    className="fill-white text-[10px] font-black uppercase tracking-tighter"
+                                    className="fill-white text-[8px] font-black uppercase tracking-tighter"
                                 >
                                     {key}
                                 </text>
@@ -93,9 +129,9 @@ export default function VenuePreview({ shape, zones }: VenuePreviewProps) {
                                 {/* Info adicional */}
                                 {!config.isStage && (
                                     <text 
-                                        y="24" 
+                                        y="20" 
                                         textAnchor="middle" 
-                                        className="fill-slate-400 text-[8px] font-bold uppercase"
+                                        className="fill-slate-400 text-[6px] font-black uppercase tracking-widest"
                                     >
                                         {config.type === 'SEATED' 
                                             ? `${config.blocks.reduce((acc: number, b: any) => acc + (b.rows * b.seatsPerRow), 0)} Asientos`
