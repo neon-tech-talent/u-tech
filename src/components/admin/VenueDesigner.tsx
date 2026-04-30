@@ -95,7 +95,7 @@ export default function VenueDesigner() {
             const { data, error } = await supabase
                 .from("venue_layouts")
                 .insert({
-                    company_id: profile?.company_id,
+                    company_id: profile?.company_id || 'd9b32c6b-2c6b-4e1b-bc6b-2c6b2c6b2c6b',
                     name,
                     shape,
                     zones_config: zones

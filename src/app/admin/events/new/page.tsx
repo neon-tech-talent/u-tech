@@ -35,15 +35,10 @@ export default function NewEvent() {
 
     // Cargar layouts al montar o al cambiar tipo a MAPA
     const fetchLayouts = async () => {
-        console.log("Fetching layouts...");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            console.log("No session found");
-            return;
-        }
+        if (!session) return;
 
         const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', session.user.id).single();
-        console.log("User profile:", profile);
         
         let query = supabase.from('venue_layouts').select('*');
         
@@ -51,14 +46,8 @@ export default function NewEvent() {
             query = query.eq('company_id', profile.company_id);
         }
         
-        const { data, error } = await query;
-        
-        if (error) {
-            console.error("Error fetching layouts:", error);
-        } else {
-            console.log("Layouts found:", data);
-            setVenueLayouts(data || []);
-        }
+        const { data } = await query;
+        setVenueLayouts(data || []);
     };
 
     const handleAddSection = () => {
@@ -122,7 +111,7 @@ export default function NewEvent() {
             const { data: event, error: eventError } = await supabase
                 .from("events")
                 .insert({
-                    company_id: profile?.company_id,
+                    company_id: profile?.company_id || 'd9b32c6b-2c6b-4e1b-bc6b-2c6b2c6b2c6b',
                     name,
                     description,
                     event_date: new Date(date).toISOString(),
