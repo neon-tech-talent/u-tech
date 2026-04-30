@@ -18,6 +18,12 @@ export default function TicketScanner() {
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [loadingEvents, setLoadingEvents] = useState(true);
 
+    // Filters
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [dateFilter, setDateFilter] = useState("");
+    const [isTodayOnly, setIsTodayOnly] = useState(false);
+
     // Refs that survive renders
     const qrInstanceRef = useRef<any>(null);
     const processingRef = useRef(false);
@@ -226,8 +232,28 @@ export default function TicketScanner() {
 
     // ── render ────────────────────────────────────────────────
 
+    const filteredEvents = events.filter(event => {
+        const matchesName = event.name.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const eventDate = new Date(event.event_date);
+        const now = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const eventDay = new Date(eventDate);
+        eventDay.setHours(0, 0, 0, 0);
+
+        const isFinished = eventDate < now;
+        const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? !isFinished : isFinished);
+        
+        const matchesDate = !dateFilter || eventDate.toISOString().split('T')[0] === dateFilter;
+        const matchesToday = !isTodayOnly || eventDay.getTime() === today.getTime();
+
+        return matchesName && matchesStatus && matchesDate && matchesToday;
+    });
+
     return (
-        <div className="max-w-xl mx-auto space-y-6">
+        <div className="max-w-xl mx-auto space-y-6 pb-20">
             <Script
                 src="https://unpkg.com/html5-qrcode"
                 strategy="lazyOnload"
@@ -261,31 +287,89 @@ export default function TicketScanner() {
             </header>
 
             {!selectedEventId ? (
-                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-4">
-                    <h2 className="text-lg font-bold text-slate-800 px-2">Seleccionar Evento</h2>
-                    {loadingEvents ? (
-                        <div className="flex justify-center py-10">
-                            <RefreshCcw className="w-8 h-8 text-slate-200 animate-spin" />
+                <div className="space-y-6">
+                    {/* Filtros */}
+                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-5">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-800">Filtros</h2>
+                            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                                <input 
+                                    type="checkbox" 
+                                    id="today-check"
+                                    checked={isTodayOnly}
+                                    onChange={(e) => setIsTodayOnly(e.target.checked)}
+                                    className="w-4 h-4 rounded border-blue-200 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="today-check" className="text-xs font-black text-blue-600 uppercase cursor-pointer">Eventos de Hoy</label>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="grid gap-3">
-                            {events.map(event => (
-                                <button
-                                    key={event.id}
-                                    onClick={() => setSelectedEventId(event.id)}
-                                    className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all text-left group"
+
+                        <div className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="Buscar por nombre..."
+                                className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <select
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-sm appearance-none cursor-pointer"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
                                 >
-                                    <span className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{event.name}</span>
-                                    <span className="text-xs text-slate-400 font-medium">
-                                        {new Date(event.event_date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
-                                    </span>
-                                </button>
-                            ))}
-                            {events.length === 0 && (
-                                <p className="text-center py-10 text-slate-400 font-medium italic">No hay eventos disponibles.</p>
-                            )}
+                                    <option value="all">Todos los estados</option>
+                                    <option value="active">Activos / Futuros</option>
+                                    <option value="finished">Finalizados</option>
+                                </select>
+
+                                <input
+                                    type="date"
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-sm cursor-pointer"
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                />
+                            </div>
                         </div>
-                    )}
+                    </div>
+
+                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-lg font-bold text-slate-800">Seleccionar Evento</h2>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-md">
+                                {filteredEvents.length} Encontrados
+                            </span>
+                        </div>
+                        {loadingEvents ? (
+                            <div className="flex justify-center py-10">
+                                <RefreshCcw className="w-8 h-8 text-slate-200 animate-spin" />
+                            </div>
+                        ) : (
+                            <div className="grid gap-3">
+                                {filteredEvents.map(event => (
+                                    <button
+                                        key={event.id}
+                                        onClick={() => setSelectedEventId(event.id)}
+                                        className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all text-left group"
+                                    >
+                                        <div className="flex justify-between items-start w-full">
+                                            <span className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{event.name}</span>
+                                            {new Date(event.event_date) < new Date() && (
+                                                <span className="text-[8px] font-black bg-slate-100 text-slate-400 px-2 py-1 rounded-md uppercase tracking-widest">Finalizado</span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-slate-400 font-medium mt-1">
+                                            {new Date(event.event_date).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} hs
+                                        </span>
+                                    </button>
+                                ))}
+                                {filteredEvents.length === 0 && (
+                                    <p className="text-center py-10 text-slate-400 font-medium italic">No se encontraron eventos con esos filtros.</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <>
