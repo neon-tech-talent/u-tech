@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/utils";
 import { Calendar, MapPin, User, Edit3, Clock, CheckCircle2, X, Ticket } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAfter, subHours } from "date-fns";
+import * as OTPAuth from "otpauth";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function TicketList({ initialTickets }: { initialTickets: any[] }) {
     const [tickets, setTickets] = useState(initialTickets);
@@ -149,20 +151,74 @@ export default function TicketList({ initialTickets }: { initialTickets: any[] }
                         </div>
 
                         <div className="bg-slate-900 w-full md:w-52 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-white/10 text-white">
-                            <div className="bg-white p-3 rounded-[16px] mb-3 group-hover:scale-105 transition-transform duration-500">
-                                <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${ticket.qr_code}&margin=0`}
-                                    alt="QR Code"
-                                    className="w-40 h-40 md:w-44 md:h-44 object-contain rounded-lg"
-                                />
-                            </div>
-                            <p className="text-[8px] font-mono opacity-50 break-all text-center">
-                                {ticket.qr_code.slice(0, 8)}
-                            </p>
+                            <DynamicQR 
+                                ticketId={ticket.id} 
+                                qrSeed={ticket.qr_seed || ticket.qr_code} 
+                            />
                         </div>
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+function DynamicQR({ ticketId, qrSeed }: { ticketId: string, qrSeed: string }) {
+    const [token, setToken] = useState("");
+    const [timeLeft, setTimeLeft] = useState(30);
+
+    useEffect(() => {
+        // Use the seed to generate TOTP. If it's a UUID, we strip hyphens for hex.
+        // If not a valid hex, it defaults to a safe fallback.
+        const secret = qrSeed.replace(/-/g, "");
+        const totp = new OTPAuth.TOTP({
+            issuer: "U-Ticket",
+            label: ticketId,
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30,
+            secret: OTPAuth.Secret.fromHex(secret),
+        });
+
+        const updateToken = () => {
+            const newToken = totp.generate();
+            setToken(newToken);
+            
+            const seconds = Math.floor(Date.now() / 1000);
+            setTimeLeft(30 - (seconds % 30));
+        };
+
+        updateToken();
+        const interval = setInterval(updateToken, 1000);
+
+        return () => clearInterval(interval);
+    }, [ticketId, qrSeed]);
+
+    const qrPayload = JSON.stringify({ id: ticketId, t: token });
+
+    return (
+        <div className="flex flex-col items-center gap-4 w-full">
+            <div className="bg-white p-3 rounded-[24px] group-hover:scale-105 transition-transform duration-500 shadow-2xl shadow-black/40">
+                <QRCodeSVG
+                    value={qrPayload}
+                    size={160}
+                    level="M"
+                    includeMargin={false}
+                />
+            </div>
+            
+            <div className="w-full px-4 space-y-2">
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                        style={{ width: `${(timeLeft / 30) * 100}%` }}
+                    />
+                </div>
+                <div className="flex justify-between items-center px-1">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">QR Dinámico</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">{timeLeft}s</p>
+                </div>
+            </div>
         </div>
     );
 }

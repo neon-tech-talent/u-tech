@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { supabase } from "@/lib/supabase";
 import { ScanFace, CheckCircle2, XCircle, AlertTriangle, RefreshCcw, Ticket } from "lucide-react";
+import * as OTPAuth from "otpauth";
 
 type ScanResult = null | "success" | "used" | "invalid";
 
@@ -94,17 +95,56 @@ export default function TicketScanner() {
         await stopCamera();
 
         try {
+            // 1. Parse JSON payload
+            let ticketId: string;
+            let scannedToken: string;
+
+            try {
+                const payload = JSON.parse(decodedText);
+                ticketId = payload.id;
+                scannedToken = payload.t;
+            } catch (e) {
+                // Fallback for legacy QR codes (direct string)
+                ticketId = decodedText;
+                scannedToken = ""; 
+            }
+
+            if (!ticketId) {
+                setScanResult("invalid");
+                return;
+            }
+
             const { data, error } = await supabase
                 .from("tickets")
                 .select("*, ticket_types(name)")
-                .eq("qr_code", decodedText)
-                .single();
+                .eq("id", ticketId.length === 36 ? ticketId : "00000000-0000-0000-0000-000000000000") // Basic UUID check
+                .or(`id.eq.${ticketId},qr_code.eq.${ticketId}`) // Try both ID and legacy QR code
+                .maybeSingle();
 
             if (!mountedRef.current) return;
 
             if (error || !data) {
                 setScanResult("invalid");
                 return;
+            }
+
+            // 2. Validate TOTP if token is present
+            if (scannedToken) {
+                const secret = (data.qr_seed || data.qr_code).replace(/-/g, "");
+                const totp = new OTPAuth.TOTP({
+                    issuer: "U-Ticket",
+                    label: data.id,
+                    algorithm: "SHA1",
+                    digits: 6,
+                    period: 30,
+                    secret: OTPAuth.Secret.fromHex(secret),
+                });
+
+                const delta = totp.validate({ token: scannedToken, window: 1 });
+                if (delta === null) {
+                    setScanResult("invalid");
+                    return;
+                }
             }
 
             setTicketData(data);
