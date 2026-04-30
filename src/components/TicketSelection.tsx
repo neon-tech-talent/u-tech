@@ -259,6 +259,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                             key={si}
                                                                             disabled={!isAvailable}
                                                                             onClick={() => {
+                                                                                if (!seat) return;
                                                                                 console.log("Seat clicked:", seat.id, "Row:", rowName, "Num:", seatNum);
                                                                                 try {
                                                                                     setSelectedSeat(seat.id);
