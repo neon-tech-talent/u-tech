@@ -252,7 +252,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                     const isSold = seat?.status === 'SOLD';
                                                                     const isReserved = seat?.status === 'RESERVED' && seat.reserved_until && new Date(seat.reserved_until) > new Date();
                                                                     const isSelected = selectedSeat === seat?.id;
-                                                                    const isAvailable = seat && !isSold && !isReserved;
+                                                                    const isAvailable = !!seat && !isSold && !isReserved;
 
                                                                     return (
                                                                         <button
@@ -263,11 +263,12 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                             }}
                                                                             className={cn(
                                                                                 "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
+                                                                                !seat ? "bg-slate-100/50 text-slate-300 cursor-not-allowed border border-slate-200 border-dashed" :
                                                                                 isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
                                                                                 isSelected ? "bg-red-500 text-white shadow-lg shadow-red-500/40 ring-2 ring-red-200" :
                                                                                 "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
                                                                             )}
-                                                                            title={`Fila ${rowName}, Asiento ${seatNum}`}
+                                                                            title={!seat ? 'Asiento no registrado' : `Fila ${rowName}, Asiento ${seatNum}`}
                                                                         >
                                                                             {isSelected ? <Check className="w-4 h-4" /> : seatNum}
                                                                         </button>
