@@ -261,14 +261,14 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                     return (
                                         <div className={cn(
                                             "flex items-center justify-center bg-green-500 shadow-[0_0_40px_rgba(34,197,94,0.5)] shrink-0 z-10 mx-auto",
-                                            isVertical ? "w-[300px] md:w-[500px] h-12 md:h-16" : "w-12 md:w-16 h-[250px] md:h-[400px]",
-                                            stagePos === 'TOP' ? "rounded-b-[60px] mb-8 lg:mb-12" :
-                                            stagePos === 'BOTTOM' ? "rounded-t-[60px] mt-8 lg:mt-12" :
-                                            stagePos === 'LEFT' ? "rounded-r-[60px] mr-8 lg:mr-12" :
-                                            "rounded-l-[60px] ml-8 lg:ml-12"
+                                            isVertical ? "w-[400px] md:w-[700px] h-16 md:h-24" : "w-16 md:w-24 h-[350px] md:h-[500px]",
+                                            stagePos === 'TOP' ? "rounded-b-[80px] mb-8 lg:mb-12" :
+                                            stagePos === 'BOTTOM' ? "rounded-t-[80px] mt-8 lg:mt-12" :
+                                            stagePos === 'LEFT' ? "rounded-r-[80px] mr-8 lg:mr-12" :
+                                            "rounded-l-[80px] ml-8 lg:ml-12"
                                         )}>
                                             <span className={cn(
-                                                "text-white font-black text-[10px] md:text-xs tracking-[0.3em] uppercase",
+                                                "text-white font-black text-xs md:text-sm tracking-[0.5em] md:tracking-[1em] uppercase",
                                                 !isVertical && "rotate-[-90deg] whitespace-nowrap"
                                             )}>
                                                 Escenario
