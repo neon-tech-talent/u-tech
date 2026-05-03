@@ -27,42 +27,43 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
     };
 
     // Positions adapted for better visualization
+    // Positions spread across the 600x600 viewBox
     const getZonePositions = () => {
         const base = {
             'Centro': { x: 300, y: 300 },
-            'Arriba': { x: 300, y: 230 },
-            'Abajo': { x: 300, y: 370 },
-            'Izquierda': { x: 200, y: 300 },
-            'Derecha': { x: 400, y: 300 },
+            'Arriba': { x: 300, y: 190 },
+            'Abajo': { x: 300, y: 410 },
+            'Izquierda': { x: 120, y: 300 },
+            'Derecha': { x: 480, y: 300 },
         };
 
         if (shape === 'SEMICIRCLE') {
             return {
-                'Centro': { x: 300, y: 340 },
-                'Arriba': { x: 300, y: 280 },
-                'Abajo': { x: 300, y: 400 },
-                'Izquierda': { x: 220, y: 370 },
-                'Derecha': { x: 380, y: 370 },
+                'Centro': { x: 300, y: 370 },
+                'Arriba': { x: 300, y: 250 },
+                'Abajo': { x: 300, y: 480 },
+                'Izquierda': { x: 150, y: 400 },
+                'Derecha': { x: 450, y: 400 },
             };
         }
 
         if (shape === 'RECT_V') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 210 },
-                'Abajo': { x: 300, y: 390 },
-                'Izquierda': { x: 220, y: 300 },
-                'Derecha': { x: 380, y: 300 },
+                'Arriba': { x: 300, y: 120 },
+                'Abajo': { x: 300, y: 480 },
+                'Izquierda': { x: 190, y: 300 },
+                'Derecha': { x: 410, y: 300 },
             };
         }
 
         if (shape === 'OVAL') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 220 },
-                'Abajo': { x: 300, y: 380 },
-                'Izquierda': { x: 180, y: 300 },
-                'Derecha': { x: 420, y: 300 },
+                'Arriba': { x: 300, y: 160 },
+                'Abajo': { x: 300, y: 440 },
+                'Izquierda': { x: 150, y: 300 },
+                'Derecha': { x: 450, y: 300 },
             };
         }
 
@@ -71,24 +72,35 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
 
     const zonePositions = getZonePositions();
 
-    // Helper function to draw rows of seats
+    // Helper function to draw rows of seats, scales down if there are many, scales up if there are few
     const renderMiniSeats = (rows: number, seatsPerRow: number, cx: number, cy: number, active: boolean) => {
         const dots = [];
-        const maxRows = Math.min(rows, 4);
-        const maxSeats = Math.min(seatsPerRow, 8);
-        const spacing = 6;
-        const startX = cx - ((maxSeats - 1) * spacing) / 2;
-        const startY = cy - ((maxRows - 1) * spacing) / 2;
+        const blockRows = rows || 1;
+        const blockSeats = seatsPerRow || 1;
 
-        for (let r = 0; r < maxRows; r++) {
-            for (let s = 0; s < maxSeats; s++) {
+        // Máximo espacio ocupable por zona
+        const MAX_BOX_WIDTH = 130;  
+        const MAX_BOX_HEIGHT = 80;  
+
+        // Distancia dinámica
+        const spacingX = MAX_BOX_WIDTH / blockSeats;
+        const spacingY = MAX_BOX_HEIGHT / blockRows;
+        const spacing = Math.min(spacingX, spacingY, 15); 
+
+        const r = Math.max(1.5, spacing * 0.35); 
+
+        const startX = cx - ((blockSeats - 1) * spacing) / 2;
+        const startY = cy - ((blockRows - 1) * spacing) / 2;
+
+        for (let rIdx = 0; rIdx < blockRows; rIdx++) {
+            for (let sIdx = 0; sIdx < blockSeats; sIdx++) {
                 dots.push(
                     <circle 
-                        key={`seat-${r}-${s}`}
-                        cx={startX + s * spacing} 
-                        cy={startY + r * spacing} 
-                        r="1.5" 
-                        className={active ? "fill-blue-400 group-hover/zone:fill-blue-300" : "fill-blue-800/50"} 
+                        key={`seat-${rIdx}-${sIdx}`}
+                        cx={startX + sIdx * spacing} 
+                        cy={startY + rIdx * spacing} 
+                        r={r} 
+                        className={active ? "fill-blue-400 group-hover/zone:fill-blue-300 transition-colors duration-300" : "fill-blue-800/50"} 
                     />
                 );
             }
@@ -115,7 +127,7 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
 
                 {Object.entries(zones).map(([key, config]: [string, any]) => {
                     if (!config.active) return null;
-                    const pos = (zonePositions as any)[key];
+                    const pos = (zonePositions as any)[key] || { x: 300, y: 300 }; // fallback
                     const isClickable = !config.isStage && onZoneClick;
                     const isStage = config.isStage;
                     const isSeated = config.type === 'SEATED';
@@ -131,52 +143,64 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                             onClick={() => isClickable && onZoneClick(key)}
                         >
                             {/* Glow de la zona */}
-                            <circle cx={pos.x} cy={pos.y} r="50" fill={isStage ? "url(#stageGlow)" : "url(#zoneGlow)"} className="opacity-0 group-hover/zone:opacity-100 transition-opacity duration-300" />
+                            <circle cx={pos.x} cy={pos.y} r={isStage ? "80" : "60"} fill={isStage ? "url(#stageGlow)" : "url(#zoneGlow)"} className="opacity-0 group-hover/zone:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-                            {/* Representación visual de la zona (en vez de rectangulos basicos) */}
+                            {/* Representación visual de la zona */}
                             {isStage ? (
-                                <g>
-                                    <path d={`M ${pos.x - 50} ${pos.y + 10} Q ${pos.x} ${pos.y - 30} ${pos.x + 50} ${pos.y + 10} L ${pos.x + 40} ${pos.y + 25} L ${pos.x - 40} ${pos.y + 25} Z`} className="fill-green-500 shadow-xl" />
-                                    <rect x={pos.x - 20} y={pos.y - 5} width="40" height="15" rx="4" className="fill-green-400" />
-                                </g>
+                                (() => {
+                                    let rotation = 0;
+                                    if (key === 'Izquierda') rotation = 90;
+                                    else if (key === 'Derecha') rotation = -90;
+                                    else if (key === 'Arriba') rotation = 180;
+                                    else if (key === 'Abajo') rotation = 0; // point up automatically
+                                    
+                                    return (
+                                        <g transform={`rotate(${rotation} ${pos.x} ${pos.y})`}>
+                                            <path d={`M ${pos.x - 70} ${pos.y + 15} Q ${pos.x} ${pos.y - 45} ${pos.x + 70} ${pos.y + 15} L ${pos.x + 55} ${pos.y + 35} L ${pos.x - 55} ${pos.y + 35} Z`} className="fill-green-500 shadow-xl" />
+                                            <rect x={pos.x - 30} y={pos.y - 10} width="60" height="20" rx="6" className="fill-green-400" />
+                                        </g>
+                                    );
+                                })()
                             ) : (
                                 <g>
                                     <rect 
-                                        x={pos.x - 45} 
-                                        y={pos.y - 30} 
-                                        width="90" 
-                                        height="60" 
+                                        x={pos.x - 75} 
+                                        y={pos.y - 45} 
+                                        width="150" 
+                                        height="90" 
                                         className="fill-transparent cursor-pointer" 
                                     />
                                     
                                     {/* Gráficos del contenido */}
                                     {isSeated ? (
                                         <g>
-                                            {/* Renderizamos filas de "asientos" simulados */}
-                                            {renderMiniSeats(5, 10, pos.x, pos.y - 5, config.active)}
+                                            {/* Extrae rows y compila asientos */}
+                                            {renderMiniSeats(config.blocks?.[0]?.rows || 5, config.blocks?.[0]?.seatsPerRow || 10, pos.x, pos.y - 5, config.active)}
                                         </g>
                                     ) : (
                                         <g>
                                             {/* Campo / Pie simulado con puntos dispersos y un área plana */}
-                                            <rect x={pos.x - 35} y={pos.y - 20} width="70" height="30" rx="4" className="fill-blue-500/10 stroke-blue-500/30 stroke-1 stroke-dasharray-2" />
-                                            <circle cx={pos.x - 20} cy={pos.y - 5} r="2" className="fill-blue-400/50" />
-                                            <circle cx={pos.x + 10} cy={pos.y - 10} r="1.5" className="fill-blue-400/80" />
-                                            <circle cx={pos.x} cy={pos.y + 2} r="2.5" className="fill-blue-400/40" />
-                                            <circle cx={pos.x + 25} cy={pos.y} r="2" className="fill-blue-400/60" />
-                                            <circle cx={pos.x - 10} cy={pos.y - 12} r="1.5" className="fill-blue-400/70" />
+                                            <rect x={pos.x - 45} y={pos.y - 25} width="90" height="40" rx="6" className="fill-blue-500/10 stroke-blue-500/30 stroke-1 stroke-dasharray-2 group-hover/zone:stroke-blue-400 transition-all duration-300" />
+                                            <circle cx={pos.x - 30} cy={pos.y - 10} r="2.5" className="fill-blue-400/50" />
+                                            <circle cx={pos.x + 15} cy={pos.y - 12} r="2" className="fill-blue-400/80" />
+                                            <circle cx={pos.x} cy={pos.y + 5} r="3" className="fill-blue-400/40" />
+                                            <circle cx={pos.x + 35} cy={pos.y} r="2.5" className="fill-blue-400/60" />
+                                            <circle cx={pos.x - 15} cy={pos.y - 15} r="2" className="fill-blue-400/70" />
+                                            <circle cx={pos.x + 20} cy={pos.y + 10} r="2.5" className="fill-blue-400/50" />
+                                            <circle cx={pos.x - 25} cy={pos.y + 5} r="2" className="fill-blue-400/70" />
                                         </g>
                                     )}
                                 </g>
                             )}
                             
                             {/* Etiqueta de la zona */}
-                            <g transform={`translate(${pos.x}, ${pos.y + (isStage ? 40 : 42)})`}>
+                            <g transform={`translate(${pos.x}, ${pos.y + 45})`}>
                                 <rect 
-                                    x="-30" 
-                                    y="-8" 
-                                    width="60" 
-                                    height="16" 
-                                    rx="8" 
+                                    x="-35" 
+                                    y="-10" 
+                                    width="70" 
+                                    height="20" 
+                                    rx="10" 
                                     className={cn(
                                         "transition-all duration-300",
                                         isStage ? "fill-green-600" : "fill-slate-800 group-hover/zone:fill-blue-600 border border-slate-700"
@@ -185,7 +209,7 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                                 <text 
                                     textAnchor="middle" 
                                     dominantBaseline="central" 
-                                    className="fill-white text-[7px] font-black uppercase tracking-widest pointer-events-none"
+                                    className="fill-white text-[8px] font-black uppercase tracking-widest pointer-events-none"
                                 >
                                     {key}
                                 </text>
