@@ -86,6 +86,23 @@ export default function VenueDesigner() {
         updateZone(key, { blocks: newBlocks });
     };
 
+    const handleStageToggle = (key: ZoneKey) => {
+        const isCurrentlyStage = zones[key].isStage;
+        if (!isCurrentlyStage) {
+            // Al activarlo, desactivamos el escenario en todas las demás zonas
+            setZones(prev => {
+                const next = { ...prev };
+                (Object.keys(next) as ZoneKey[]).forEach(k => {
+                    next[k] = { ...next[k], isStage: k === key };
+                });
+                return next;
+            });
+        } else {
+            // Al desactivarlo, solo afectamos a la zona actual
+            updateZone(key, { isStage: false });
+        }
+    };
+
     const handleSave = async () => {
         if (!name) return alert("Por favor, ponle un nombre al diseño");
         setSaving(true);
@@ -202,7 +219,7 @@ export default function VenueDesigner() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <button 
-                                        onClick={() => updateZone(selectedZone, { isStage: !zones[selectedZone].isStage })}
+                                        onClick={() => handleStageToggle(selectedZone)}
                                         className={cn(
                                             "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                                             zones[selectedZone].isStage ? "bg-green-500 text-white shadow-lg shadow-green-200" : "bg-slate-100 text-slate-800 hover:bg-slate-200"
