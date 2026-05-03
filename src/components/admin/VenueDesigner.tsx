@@ -12,7 +12,8 @@ import {
     Save,
     ChevronRight,
     Users,
-    Gamepad2
+    Gamepad2,
+    Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import VenuePreview from "./VenuePreview";
@@ -113,262 +114,242 @@ export default function VenueDesigner() {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 min-h-[800px] items-start">
-            {/* Panel de Control */}
-            <div className="lg:col-span-3 space-y-6">
-                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-6">
-                    <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre del Diseño</label>
-                        <input 
-                            type="text" 
-                            className="w-full mt-2 bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-slate-900 outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all"
-                            placeholder="Ej: Estadio Principal"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </div>
+        <div className="flex flex-col gap-8 min-h-[800px]">
+            {/* Top Row: Horizontal Panels */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-stretch">
+                
+                {/* Panel 1: Ajustes Básicos */}
+                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 h-full flex flex-col">
+                    <h3 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">Datos del Recinto</h3>
+                    <div className="space-y-8 flex-1">
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre del Diseño</label>
+                            <input 
+                                type="text" 
+                                className="w-full mt-2 bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-slate-900 outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all"
+                                placeholder="Ej: Estadio Principal"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
 
-                    <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 block mb-3">Forma del Recinto</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {(['RECT_H', 'RECT_V', 'OVAL', 'SEMICIRCLE'] as Shape[]).map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => setShape(s)}
-                                    className={cn(
-                                        "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all",
-                                        shape === s ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400 hover:border-slate-200"
-                                    )}
-                                >
-                                    {s === 'RECT_H' && <Box className="w-6 h-6 rotate-90" />}
-                                    {s === 'RECT_V' && <Box className="w-6 h-6" />}
-                                    {s === 'OVAL' && <Circle className="w-6 h-6" />}
-                                    {s === 'SEMICIRCLE' && <div className="w-6 h-6 border-4 border-current rounded-t-full" />}
-                                    <span className="text-[10px] font-black uppercase">{s.replace('_', ' ')}</span>
-                                </button>
-                            ))}
+                        <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 block mb-3">Forma Base</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {(['RECT_H', 'RECT_V', 'OVAL', 'SEMICIRCLE'] as Shape[]).map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setShape(s)}
+                                        className={cn(
+                                            "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all",
+                                            shape === s ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400 hover:border-slate-200"
+                                        )}
+                                    >
+                                        {s === 'RECT_H' && <Box className="w-6 h-6 rotate-90" />}
+                                        {s === 'RECT_V' && <Box className="w-6 h-6" />}
+                                        {s === 'OVAL' && <Circle className="w-6 h-6" />}
+                                        {s === 'SEMICIRCLE' && <div className="w-6 h-6 border-4 border-current rounded-t-full" />}
+                                        <span className="text-[10px] font-black uppercase">{s.replace('_', ' ')}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-6">
-                    <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 block mb-3">Zonas Activas</label>
-                        <div className="grid grid-cols-1 gap-2">
-                            {(Object.keys(zones) as ZoneKey[]).map((key) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setSelectedZone(key)}
-                                    className={cn(
-                                        "flex items-center justify-between p-4 rounded-2xl border-2 transition-all group",
-                                        selectedZone === key ? "border-blue-600 bg-blue-50" : "border-slate-50 hover:border-slate-200"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div 
-                                            onClick={(e) => { e.stopPropagation(); toggleZone(key); }}
+                {/* Panel 2: Zonas Activas */}
+                <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 h-full flex flex-col">
+                    <h3 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">Zonas de Venta</h3>
+                    <div className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar max-h-[500px]">
+                        {(Object.keys(zones) as ZoneKey[]).map((key) => (
+                            <button
+                                key={key}
+                                onClick={() => setSelectedZone(key)}
+                                className={cn(
+                                    "w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all group",
+                                    selectedZone === key ? "border-blue-600 bg-blue-50" : "border-slate-50 hover:border-slate-200"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div 
+                                        onClick={(e) => { e.stopPropagation(); toggleZone(key); }}
+                                        className={cn(
+                                            "w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all",
+                                            zones[key].active ? "bg-blue-600 border-blue-600 text-white" : "border-slate-200"
+                                        )}
+                                    >
+                                        {zones[key].active && <CheckCircle2 className="w-4 h-4" />}
+                                    </div>
+                                    <span className={cn("text-sm font-black uppercase tracking-tight", zones[key].active ? "text-slate-900" : "text-slate-300")}>
+                                        {key}
+                                        {zones[key].isStage && <span className="ml-2 text-[8px] bg-green-500 text-white px-2 py-1 rounded-full">ESCENARIO</span>}
+                                    </span>
+                                </div>
+                                <ChevronRight className={cn("w-5 h-5 transition-all", selectedZone === key ? "text-blue-600 translate-x-1" : "text-slate-300")} />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Panel 3: Configuración de la Zona Seleccionada */}
+                <div className="h-full">
+                    {selectedZone ? (
+                        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 h-full flex flex-col">
+                            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-900">Config: {selectedZone}</h3>
+                                    <p className="text-slate-400 text-xs mt-1 font-bold">{zones[selectedZone].active ? "Zona activa para configuración" : "Activa la zona para utilizarla"}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={() => updateZone(selectedZone, { isStage: !zones[selectedZone].isStage })}
+                                        className={cn(
+                                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                            zones[selectedZone].isStage ? "bg-green-500 text-white shadow-lg shadow-green-200" : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                                        )}
+                                    >
+                                        {zones[selectedZone].isStage ? "Es Escenario" : "Tipo: Grada/Pista"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {!zones[selectedZone].isStage && (
+                                <div className="space-y-6 flex-1 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => updateZone(selectedZone, { type: 'SEATED' })}
                                             className={cn(
-                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                                zones[key].active ? "bg-blue-600 border-blue-600 text-white" : "border-slate-200"
+                                                "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all w-full text-center",
+                                                zones[selectedZone].type === 'SEATED' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
                                             )}
                                         >
-                                            {zones[key].active && <CheckCircle2 className="w-3 h-3" />}
-                                        </div>
-                                        <span className={cn("text-sm font-black uppercase tracking-tight", zones[key].active ? "text-slate-900" : "text-slate-300")}>
-                                            {key}
-                                            {zones[key].isStage && <span className="ml-2 text-[8px] bg-green-500 text-white px-1.5 py-0.5 rounded-full">ESCENARIO</span>}
-                                        </span>
-                                    </div>
-                                    <ChevronRight className={cn("w-4 h-4 transition-all", selectedZone === key ? "text-blue-600 translate-x-1" : "text-slate-300")} />
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Panel de Configuración de Zona */}
-            <div className="lg:col-span-4 space-y-6 h-full flex flex-col">
-                {selectedZone ? (
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 h-full flex flex-col">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900">Configurar Zona: {selectedZone}</h3>
-                                <p className="text-slate-400 text-sm mt-1">Define el contenido y comportamiento de esta área.</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button 
-                                    onClick={() => updateZone(selectedZone, { isStage: !zones[selectedZone].isStage })}
-                                    className={cn(
-                                        "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                        zones[selectedZone].isStage ? "bg-green-500 text-white" : "bg-slate-100 text-slate-400"
-                                    )}
-                                >
-                                    {zones[selectedZone].isStage ? "Es Escenario" : "Marcar Escenario"}
-                                </button>
-                            </div>
-                        </div>
-
-                        {!zones[selectedZone].isStage && (
-                            <div className="space-y-8 flex-1">
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => updateZone(selectedZone, { type: 'SEATED' })}
-                                        className={cn(
-                                            "flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all w-full",
-                                            zones[selectedZone].type === 'SEATED' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
-                                        )}
-                                    >
-                                        <div className="bg-white p-3 rounded-xl shadow-sm shrink-0"><Gamepad2 className="w-6 h-6" /></div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-black uppercase">Asientos</p>
-                                            <p className="text-[10px] opacity-60">Filas y columnas fijas por bloques</p>
-                                        </div>
-                                    </button>
-                                    <button
-                                        onClick={() => updateZone(selectedZone, { type: 'STANDING' })}
-                                        className={cn(
-                                            "flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all w-full",
-                                            zones[selectedZone].type === 'STANDING' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
-                                        )}
-                                    >
-                                        <div className="bg-white p-3 rounded-xl shadow-sm shrink-0"><Users className="w-6 h-6" /></div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-black uppercase">Campo / Pie</p>
-                                            <p className="text-[10px] opacity-60">Venta por capacidad total (sin asientos)</p>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                {zones[selectedZone].type === 'SEATED' ? (
-                                    <div className="space-y-6">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Bloques de Asientos</h4>
-                                            <button 
-                                                onClick={() => addBlock(selectedZone)}
-                                                className="flex items-center gap-2 text-blue-600 font-bold text-xs hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                Agregar Bloque
-                                            </button>
-                                        </div>
-                                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                            {zones[selectedZone].blocks.map((block, i) => (
-                                                <div key={i} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
-                                                    <div className="bg-white px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400 border border-slate-100">
-                                                        #{i + 1}
-                                                    </div>
-                                                    <div className="flex-1 grid grid-cols-2 gap-4">
-                                                        <div className="space-y-1">
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Filas</label>
-                                                            <input 
-                                                                type="number" 
-                                                                value={block.rows}
-                                                                onChange={(e) => updateBlock(selectedZone, i, 'rows', parseInt(e.target.value) || 0)}
-                                                                className="w-full bg-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[8px] font-black text-slate-400 uppercase ml-1">Asientos / Fila</label>
-                                                            <input 
-                                                                type="number" 
-                                                                value={block.seatsPerRow}
-                                                                onChange={(e) => updateBlock(selectedZone, i, 'seatsPerRow', parseInt(e.target.value) || 0)}
-                                                                className="w-full bg-white px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => removeBlock(selectedZone, i)}
-                                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            {zones[selectedZone].blocks.length === 0 && (
-                                                <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-2xl">
-                                                    <p className="text-slate-400 text-sm font-medium italic">No hay bloques de asientos configurados.</p>
-                                                </div>
+                                            <Gamepad2 className="w-8 h-8" />
+                                            <div>
+                                                <p className="text-xs font-black uppercase">Asientos</p>
+                                                <p className="text-[9px] opacity-60">Filas fijas</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => updateZone(selectedZone, { type: 'STANDING' })}
+                                            className={cn(
+                                                "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all w-full text-center",
+                                                zones[selectedZone].type === 'STANDING' ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-50 text-slate-400"
                                             )}
-                                        </div>
+                                        >
+                                            <Users className="w-8 h-8" />
+                                            <div>
+                                                <p className="text-xs font-black uppercase">Campo</p>
+                                                <p className="text-[9px] opacity-60">General</p>
+                                            </div>
+                                        </button>
+                                    </div>
 
-                                        {/* Mini Preview de Asientos de la Zona */}
-                                        <div className="bg-slate-900 rounded-3xl p-6 overflow-hidden relative">
-                                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 text-center">Previsualización de Filas</p>
-                                            <div className="flex flex-col items-center gap-1">
-                                                {zones[selectedZone].blocks.map((block, bi) => (
-                                                    <div key={bi} className="space-y-1">
-                                                        {Array.from({ length: Math.min(block.rows, 5) }).map((_, ri) => (
-                                                            <div key={ri} className="flex gap-1 justify-center">
-                                                                {Array.from({ length: Math.min(block.seatsPerRow, 15) }).map((_, si) => (
-                                                                    <div key={si} className="w-1.5 h-1.5 rounded-full bg-blue-500/40" />
-                                                                ))}
-                                                                {block.seatsPerRow > 15 && <div className="w-1.5 h-1.5 rounded-full bg-blue-500/10" />}
+                                    {zones[selectedZone].type === 'SEATED' ? (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between pt-2">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Bloques y Distribución</h4>
+                                                <button 
+                                                    onClick={() => addBlock(selectedZone)}
+                                                    className="flex items-center gap-2 text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-xs transition-colors"
+                                                >
+                                                    <Plus className="w-4 h-4" /> Bloque
+                                                </button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {zones[selectedZone].blocks.map((block, i) => (
+                                                    <div key={i} className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:border-blue-200 transition-colors">
+                                                        <div className="w-6 h-6 flex items-center justify-center bg-white rounded-lg text-[10px] font-black text-slate-400 border border-slate-100 shadow-sm shrink-0">
+                                                            {i + 1}
+                                                        </div>
+                                                        <div className="flex-1 grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Filas</label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    value={block.rows}
+                                                                    onChange={(e) => updateBlock(selectedZone, i, 'rows', parseInt(e.target.value) || 0)}
+                                                                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 outline-none focus:border-blue-600 shadow-sm transition-colors text-center"
+                                                                />
                                                             </div>
-                                                        ))}
-                                                        {block.rows > 5 && <p className="text-[8px] text-white/10 text-center">...</p>}
+                                                            <div className="space-y-1">
+                                                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Asientos</label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    value={block.seatsPerRow}
+                                                                    onChange={(e) => updateBlock(selectedZone, i, 'seatsPerRow', parseInt(e.target.value) || 0)}
+                                                                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 outline-none focus:border-blue-600 shadow-sm transition-colors text-center"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => removeBlock(selectedZone, i)}
+                                                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 ))}
+                                                {zones[selectedZone].blocks.length === 0 && (
+                                                    <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+                                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Sin bloques asignados</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-4">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest block pl-1">Capacidad Máxima (Personas)</label>
-                                        <input 
-                                            type="number" 
-                                            placeholder="Ej: 500"
-                                            className="w-full bg-white border-none rounded-2xl px-6 py-5 text-xl font-black text-slate-900 outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all shadow-sm"
-                                            value={zones[selectedZone].maxCapacity || ""}
-                                            onChange={(e) => updateZone(selectedZone, { maxCapacity: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {zones[selectedZone].isStage && (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4">
-                                <div className="bg-green-100 p-8 rounded-[40px] text-green-600 mb-4">
-                                    <Monitor className="w-16 h-16" />
+                                    ) : (
+                                        <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 flex flex-col justify-center gap-3 h-40">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Capacidad Máxima Permitida (Personas)</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="Ej: 500"
+                                                className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 outline-none focus:border-blue-600 transition-all shadow-sm"
+                                                value={zones[selectedZone].maxCapacity || ""}
+                                                onChange={(e) => updateZone(selectedZone, { maxCapacity: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Área de Escenario</h4>
-                                <p className="text-slate-500 max-w-xs font-medium">Esta zona se pintará de verde y quedará bloqueada para la venta de entradas automáticamente.</p>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between">
-                            <div className="text-slate-400 font-bold text-xs">
-                                Layout: <span className="text-slate-900">{shape}</span>
-                            </div>
-                            <button 
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black flex items-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95 disabled:opacity-50"
-                            >
-                                {saving ? <Plus className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                <span>{saving ? "Guardando..." : "Guardar Diseño"}</span>
-                            </button>
+                            {zones[selectedZone].isStage && (
+                                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 py-10">
+                                    <div className="bg-green-100 p-8 rounded-[32px] text-green-600">
+                                        <Monitor className="w-12 h-12" />
+                                    </div>
+                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Escenario Principal</h4>
+                                    <p className="text-slate-500 text-sm max-w-[200px] font-medium leading-relaxed mb-4">Esta zona no tendrá distribución de asientos y estará bloqueada para la venta.</p>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                ) : (
-                    <div className="bg-white/50 border-4 border-dashed border-slate-100 rounded-[40px] h-full flex flex-col items-center justify-center p-12 text-center">
-                        <Layout className="w-16 h-16 text-slate-100 mb-6" />
-                        <h3 className="text-xl font-black text-slate-300 uppercase tracking-tight">Selecciona una zona</h3>
-                        <p className="text-slate-400 max-w-xs mt-2 font-medium">Usa el panel de la izquierda para activar o configurar las áreas del recinto.</p>
-                    </div>
-                )}
+                    ) : (
+                        <div className="bg-white/50 border-4 border-dashed border-slate-100 rounded-[40px] h-full flex flex-col items-center justify-center p-12 text-center">
+                            <Layout className="w-16 h-16 text-slate-200 mb-6" />
+                            <h3 className="text-xl font-black text-slate-300 uppercase tracking-tight mb-2">Selecciona una zona</h3>
+                            <p className="text-slate-400 text-sm font-medium px-4">Pincha sobre alguna de las zonas en la columna anterior para configurarla.</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Vista Previa Central (SVG) */}
-            <div className="lg:col-span-5 bg-slate-900 rounded-[40px] p-6 lg:p-10 flex items-center justify-center relative overflow-hidden shadow-2xl h-full min-h-[600px] lg:min-h-0">
-                <div className="absolute top-8 left-8">
-                    <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">
-                        Vista Previa Real-Time
+            {/* Bottom Row: Preview real-time + Save Button */}
+            <div className="bg-slate-900 rounded-[40px] p-6 lg:p-12 relative overflow-hidden shadow-2xl flex flex-col items-center justify-center w-full min-h-[600px] aspect-video">
+                <div className="absolute top-8 left-8 right-8 flex items-center justify-between z-10">
+                    <span className="bg-blue-600 text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-900/40 border border-blue-500/50">
+                        Vista Previa Real-Time - {shape.replace('_', ' ')}
                     </span>
+                    <button 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-white text-slate-900 px-8 py-3 rounded-full font-black flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-black/20 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                        <span className="uppercase tracking-widest text-xs">{saving ? "Guardando..." : "Guardar Diseño"}</span>
+                    </button>
                 </div>
-                <VenuePreview shape={shape} zones={zones} />
+                
+                <div className="w-full max-w-4xl opacity-90 hover:opacity-100 transition-opacity mt-8">
+                    <VenuePreview shape={shape} zones={zones} />
+                </div>
             </div>
         </div>
     );
