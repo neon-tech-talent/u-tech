@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Ticket } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import TicketList from "@/components/TicketList";
 
 export default function MyTicketsPage() {
@@ -11,6 +12,7 @@ export default function MyTicketsPage() {
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [role, setRole] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchUserAndTickets = async () => {
@@ -26,8 +28,11 @@ export default function MyTicketsPage() {
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
             setRole(profile?.role || 'CUSTOMER');
 
-            if (profile?.role === 'SCANNER' || profile?.role === 'ADMIN') {
-                setLoading(false);
+            if (profile?.role === 'SCANNER') {
+                router.push('/admin/scanner');
+                return;
+            } else if (profile?.role === 'ADMIN') {
+                router.push('/admin');
                 return;
             }
 

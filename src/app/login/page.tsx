@@ -38,6 +38,8 @@ function LoginForm() {
 
             if (profile?.role === 'SCANNER') {
                 router.push('/admin/scanner');
+            } else if (profile?.role === 'ADMIN') {
+                router.push('/admin');
             } else {
                 router.push(redirectTo);
             }
