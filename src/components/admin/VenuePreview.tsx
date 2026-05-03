@@ -30,39 +30,39 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
     const getZonePositions = () => {
         const base = {
             'Centro': { x: 300, y: 300 },
-            'Arriba': { x: 300, y: 200 },
-            'Abajo': { x: 300, y: 400 },
-            'Izquierda': { x: 140, y: 300 },
-            'Derecha': { x: 460, y: 300 },
+            'Arriba': { x: 300, y: 230 },
+            'Abajo': { x: 300, y: 370 },
+            'Izquierda': { x: 200, y: 300 },
+            'Derecha': { x: 400, y: 300 },
         };
 
         if (shape === 'SEMICIRCLE') {
             return {
-                'Centro': { x: 300, y: 320 },
-                'Arriba': { x: 300, y: 230 },
-                'Abajo': { x: 300, y: 410 },
-                'Izquierda': { x: 160, y: 360 },
-                'Derecha': { x: 440, y: 360 },
+                'Centro': { x: 300, y: 340 },
+                'Arriba': { x: 300, y: 280 },
+                'Abajo': { x: 300, y: 400 },
+                'Izquierda': { x: 220, y: 370 },
+                'Derecha': { x: 380, y: 370 },
             };
         }
 
         if (shape === 'RECT_V') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 150 },
-                'Abajo': { x: 300, y: 450 },
-                'Izquierda': { x: 200, y: 300 },
-                'Derecha': { x: 400, y: 300 },
+                'Arriba': { x: 300, y: 210 },
+                'Abajo': { x: 300, y: 390 },
+                'Izquierda': { x: 220, y: 300 },
+                'Derecha': { x: 380, y: 300 },
             };
         }
 
         if (shape === 'OVAL') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 180 },
-                'Abajo': { x: 300, y: 420 },
-                'Izquierda': { x: 150, y: 300 },
-                'Derecha': { x: 450, y: 300 },
+                'Arriba': { x: 300, y: 220 },
+                'Abajo': { x: 300, y: 380 },
+                'Izquierda': { x: 180, y: 300 },
+                'Derecha': { x: 420, y: 300 },
             };
         }
 
@@ -141,14 +141,12 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                                 </g>
                             ) : (
                                 <g>
-                                    {/* Contenedor del bloque */}
                                     <rect 
                                         x={pos.x - 45} 
                                         y={pos.y - 30} 
                                         width="90" 
                                         height="60" 
-                                        rx="8" 
-                                        className="fill-slate-900/80 stroke-slate-700 stroke-1 group-hover/zone:stroke-blue-500 transition-all duration-300" 
+                                        className="fill-transparent cursor-pointer" 
                                     />
                                     
                                     {/* Gráficos del contenido */}
