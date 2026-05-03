@@ -75,15 +75,14 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
 
     const zonePositions = getZonePositions();
 
-    // Helper function to draw rows of seats, scales down if there are many, scales up if there are few
     const renderMiniSeats = (rows: number, seatsPerRow: number, cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
         const dots = [];
         const blockRows = isRotated ? (seatsPerRow || 1) : (rows || 1);
         const blockSeats = isRotated ? (rows || 1) : (seatsPerRow || 1);
 
-        // Máximo espacio ocupable por zona. Se invierte si está rotado.
-        const MAX_BOX_WIDTH = isRotated ? 80 : 130;  
-        const MAX_BOX_HEIGHT = isRotated ? 130 : 80;  
+        // Máximo espacio ocupable por zona. Se invierte y reduce si está rotado para no salirse.
+        const MAX_BOX_WIDTH = isRotated ? 60 : 110;  
+        const MAX_BOX_HEIGHT = isRotated ? 110 : 60;  
 
         // Distancia dinámica
         const spacingX = MAX_BOX_WIDTH / blockSeats;
@@ -170,10 +169,10 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                             ) : (
                                 <g>
                                     <rect 
-                                        x={isRotated ? pos.x - 45 : pos.x - 75} 
-                                        y={isRotated ? pos.y - 75 : pos.y - 45} 
-                                        width={isRotated ? "90" : "150"} 
-                                        height={isRotated ? "150" : "90"} 
+                                        x={isRotated ? pos.x - 35 : pos.x - 60} 
+                                        y={isRotated ? pos.y - 60 : pos.y - 35} 
+                                        width={isRotated ? "70" : "120"} 
+                                        height={isRotated ? "120" : "70"} 
                                         className="fill-transparent cursor-pointer" 
                                     />
                                     
