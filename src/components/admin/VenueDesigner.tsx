@@ -113,9 +113,9 @@ export default function VenueDesigner() {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8 min-h-[800px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 min-h-[800px] items-start">
             {/* Panel de Control */}
-            <div className="w-full lg:w-96 space-y-6">
+            <div className="lg:col-span-3 space-y-6">
                 <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-200 space-y-6">
                     <div>
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre del Diseño</label>
@@ -188,7 +188,7 @@ export default function VenueDesigner() {
             </div>
 
             {/* Panel de Configuración de Zona */}
-            <div className="flex-1 space-y-6">
+            <div className="lg:col-span-4 space-y-6 h-full flex flex-col">
                 {selectedZone ? (
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 h-full flex flex-col">
                         <div className="flex items-center justify-between mb-8">
@@ -362,7 +362,7 @@ export default function VenueDesigner() {
             </div>
 
             {/* Vista Previa Central (SVG) */}
-            <div className="flex-1 bg-slate-900 rounded-[40px] p-10 min-h-[600px] flex items-center justify-center relative overflow-hidden shadow-2xl">
+            <div className="lg:col-span-5 bg-slate-900 rounded-[40px] p-6 lg:p-10 flex items-center justify-center relative overflow-hidden shadow-2xl h-full min-h-[600px] lg:min-h-0">
                 <div className="absolute top-8 left-8">
                     <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">
                         Vista Previa Real-Time
