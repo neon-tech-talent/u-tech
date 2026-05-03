@@ -148,18 +148,23 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
         }
 
         setLoading(true);
-        const success = await simulatePayment();
-        if (!success) {
-            setLoading(false);
-            return;
-        }
-
-        setPaymentStatus('success');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
+        
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Debes iniciar sesión para comprar.");
+            if (!user) {
+                setError("Debes estar registrado e iniciar sesión para comprar tu ticket.");
+                setLoading(false);
+                return;
+            }
+
+            const success = await simulatePayment();
+            if (!success) {
+                setLoading(false);
+                return;
+            }
+
+            setPaymentStatus('success');
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             // 1. Create order
             const subtotal = ticketTypes.reduce((acc, t) => acc + (t.price * selection[t.id]), 0);
