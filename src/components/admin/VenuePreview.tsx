@@ -135,8 +135,8 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                     const isStage = config.isStage;
                     const isSeated = config.type === 'SEATED';
                     
-                    // Rotar matriz si es la zona Centro y el Escenario está a los lados
-                    const isRotated = key === 'Centro' && (stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha');
+                    // Rotar todas las matrices si el Escenario está a los lados para que apunten hacia él
+                    const isRotated = !isStage && (stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha');
 
                     return (
                         <g 
