@@ -161,13 +161,13 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
     return (
         <div className="space-y-8">
             {event.location_type === 'SEATED_MAP' && venueLayout && (
-                <div className="bg-slate-900 rounded-[40px] p-10 shadow-2xl relative overflow-hidden flex flex-col items-center">
-                    <div className="absolute top-8 left-8">
-                        <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">
+                <div className="bg-slate-900 rounded-[40px] pt-16 pb-8 md:pt-20 md:pb-10 shadow-2xl relative overflow-hidden flex flex-col items-center">
+                    <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
+                        <span className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-900/40">
                             Mapa Interactivo
                         </span>
                     </div>
-                    <div className="w-full max-w-[500px]">
+                    <div className="w-full px-4 md:px-12 flex justify-center">
                         <VenuePreview 
                             shape={venueLayout.shape} 
                             zones={venueLayout.zones_config} 
@@ -181,7 +181,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                             }}
                         />
                     </div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-6">Haz clic en una zona para ver los asientos</p>
+                    <p className="text-slate-400 text-[10px] md:text-xs font-black uppercase tracking-widest mt-8 px-4 text-center">Haz clic en una zona para ver los asientos</p>
                 </div>
             )}
 

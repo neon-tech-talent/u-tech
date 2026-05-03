@@ -97,7 +97,7 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
     };
 
     return (
-        <div className="w-full aspect-square max-w-[600px] flex items-center justify-center">
+        <div className="w-full aspect-square flex items-center justify-center">
             <svg viewBox="0 0 600 600" className="w-full h-full drop-shadow-2xl">
                 <defs>
                     <radialGradient id="stageGlow" cx="50%" cy="50%" r="50%">
