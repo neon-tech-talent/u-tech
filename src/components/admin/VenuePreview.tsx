@@ -200,26 +200,37 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                             )}
                             
                             {/* Etiqueta de la zona */}
-                            <g transform={`translate(${pos.x}, ${pos.y + 45})`}>
-                                <rect 
-                                    x="-35" 
-                                    y="-10" 
-                                    width="70" 
-                                    height="20" 
-                                    rx="10" 
-                                    className={cn(
-                                        "transition-all duration-300",
-                                        isStage ? "fill-green-600" : "fill-slate-800 group-hover/zone:fill-blue-600 border border-slate-700"
-                                    )} 
-                                />
-                                <text 
-                                    textAnchor="middle" 
-                                    dominantBaseline="central" 
-                                    className="fill-white text-[8px] font-black uppercase tracking-widest pointer-events-none"
-                                >
-                                    {key}
-                                </text>
-                            </g>
+                            {(() => {
+                                let labelX = 0;
+                                let labelY = 45;
+                                if (isGlobalRotated && !isStage && (key === 'Arriba' || key === 'Centro' || key === 'Abajo')) {
+                                    // Mover a los costados para no chocar con las otras zonas en la columna central
+                                    labelX = stageZoneKey === 'Izquierda' ? 50 : -50;
+                                    labelY = 0;
+                                }
+                                return (
+                                    <g transform={`translate(${pos.x + labelX}, ${pos.y + labelY})`}>
+                                        <rect 
+                                            x="-35" 
+                                            y="-10" 
+                                            width="70" 
+                                            height="20" 
+                                            rx="10" 
+                                            className={cn(
+                                                "transition-all duration-300",
+                                                isStage ? "fill-green-600" : "fill-slate-800 group-hover/zone:fill-blue-600 border border-slate-700"
+                                            )} 
+                                        />
+                                        <text 
+                                            textAnchor="middle" 
+                                            dominantBaseline="central" 
+                                            className="fill-white text-[8px] font-black uppercase tracking-widest pointer-events-none"
+                                        >
+                                            {key}
+                                        </text>
+                                    </g>
+                                );
+                            })()}
                         </g>
                     );
                 })}
