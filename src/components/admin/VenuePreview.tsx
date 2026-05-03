@@ -70,17 +70,20 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
         return base;
     };
 
+    // Identificar dónde está el escenario globalmente
+    const stageZoneKey = Object.keys(zones).find(k => zones[k]?.isStage);
+
     const zonePositions = getZonePositions();
 
     // Helper function to draw rows of seats, scales down if there are many, scales up if there are few
-    const renderMiniSeats = (rows: number, seatsPerRow: number, cx: number, cy: number, active: boolean) => {
+    const renderMiniSeats = (rows: number, seatsPerRow: number, cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
         const dots = [];
-        const blockRows = rows || 1;
-        const blockSeats = seatsPerRow || 1;
+        const blockRows = isRotated ? (seatsPerRow || 1) : (rows || 1);
+        const blockSeats = isRotated ? (rows || 1) : (seatsPerRow || 1);
 
-        // Máximo espacio ocupable por zona
-        const MAX_BOX_WIDTH = 130;  
-        const MAX_BOX_HEIGHT = 80;  
+        // Máximo espacio ocupable por zona. Se invierte si está rotado.
+        const MAX_BOX_WIDTH = isRotated ? 80 : 130;  
+        const MAX_BOX_HEIGHT = isRotated ? 130 : 80;  
 
         // Distancia dinámica
         const spacingX = MAX_BOX_WIDTH / blockSeats;
@@ -132,6 +135,9 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                     const isStage = config.isStage;
                     const isSeated = config.type === 'SEATED';
                     
+                    // Rotar matriz si es la zona Centro y el Escenario está a los lados
+                    const isRotated = key === 'Centro' && (stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha');
+
                     return (
                         <g 
                             key={key} 
@@ -164,10 +170,10 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                             ) : (
                                 <g>
                                     <rect 
-                                        x={pos.x - 75} 
-                                        y={pos.y - 45} 
-                                        width="150" 
-                                        height="90" 
+                                        x={isRotated ? pos.x - 45 : pos.x - 75} 
+                                        y={isRotated ? pos.y - 75 : pos.y - 45} 
+                                        width={isRotated ? "90" : "150"} 
+                                        height={isRotated ? "150" : "90"} 
                                         className="fill-transparent cursor-pointer" 
                                     />
                                     
@@ -175,7 +181,7 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                                     {isSeated ? (
                                         <g>
                                             {/* Extrae rows y compila asientos */}
-                                            {renderMiniSeats(config.blocks?.[0]?.rows || 5, config.blocks?.[0]?.seatsPerRow || 10, pos.x, pos.y - 5, config.active)}
+                                            {renderMiniSeats(config.blocks?.[0]?.rows || 5, config.blocks?.[0]?.seatsPerRow || 10, pos.x, pos.y - 5, config.active, isRotated)}
                                         </g>
                                     ) : (
                                         <g>
