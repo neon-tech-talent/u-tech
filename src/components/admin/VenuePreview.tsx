@@ -27,51 +27,52 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
     };
 
     // Positions adapted for better visualization
+    // Identificar dónde está el escenario globalmente
+    const stageZoneKey = Object.keys(zones).find(k => zones[k]?.isStage);
+    const isGlobalRotated = stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha';
+
     // Positions spread across the 600x600 viewBox
     const getZonePositions = () => {
         const base = {
             'Centro': { x: 300, y: 300 },
-            'Arriba': { x: 300, y: 190 },
-            'Abajo': { x: 300, y: 410 },
-            'Izquierda': { x: 120, y: 300 },
-            'Derecha': { x: 480, y: 300 },
+            'Arriba': { x: 300, y: isGlobalRotated ? 215 : 190 },
+            'Abajo': { x: 300, y: isGlobalRotated ? 385 : 410 },
+            'Izquierda': { x: isGlobalRotated ? 140 : 120, y: 300 },
+            'Derecha': { x: isGlobalRotated ? 460 : 480, y: 300 },
         };
 
         if (shape === 'SEMICIRCLE') {
             return {
                 'Centro': { x: 300, y: 370 },
-                'Arriba': { x: 300, y: 250 },
+                'Arriba': { x: 300, y: isGlobalRotated ? 280 : 250 },
                 'Abajo': { x: 300, y: 480 },
-                'Izquierda': { x: 150, y: 400 },
-                'Derecha': { x: 450, y: 400 },
+                'Izquierda': { x: isGlobalRotated ? 170 : 150, y: 400 },
+                'Derecha': { x: isGlobalRotated ? 430 : 450, y: 400 },
             };
         }
 
         if (shape === 'RECT_V') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 120 },
-                'Abajo': { x: 300, y: 480 },
-                'Izquierda': { x: 190, y: 300 },
-                'Derecha': { x: 410, y: 300 },
+                'Arriba': { x: 300, y: 150 },
+                'Abajo': { x: 300, y: 450 },
+                'Izquierda': { x: isGlobalRotated ? 210 : 180, y: 300 },
+                'Derecha': { x: isGlobalRotated ? 390 : 420, y: 300 },
             };
         }
 
         if (shape === 'OVAL') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 160 },
-                'Abajo': { x: 300, y: 440 },
-                'Izquierda': { x: 150, y: 300 },
-                'Derecha': { x: 450, y: 300 },
+                'Arriba': { x: 300, y: isGlobalRotated ? 200 : 160 },
+                'Abajo': { x: 300, y: isGlobalRotated ? 400 : 440 },
+                'Izquierda': { x: isGlobalRotated ? 170 : 140, y: 300 },
+                'Derecha': { x: isGlobalRotated ? 430 : 460, y: 300 },
             };
         }
 
         return base;
     };
-
-    // Identificar dónde está el escenario globalmente
-    const stageZoneKey = Object.keys(zones).find(k => zones[k]?.isStage);
 
     const zonePositions = getZonePositions();
 
@@ -80,9 +81,9 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
         const blockRows = isRotated ? (seatsPerRow || 1) : (rows || 1);
         const blockSeats = isRotated ? (rows || 1) : (seatsPerRow || 1);
 
-        // Máximo espacio ocupable por zona. Se invierte y reduce si está rotado para no salirse.
-        const MAX_BOX_WIDTH = isRotated ? 60 : 110;  
-        const MAX_BOX_HEIGHT = isRotated ? 110 : 60;  
+        // Ajustar estáticamente para nunca rebasar el layout interno de la figura
+        const MAX_BOX_WIDTH = isRotated ? 55 : 100;  
+        const MAX_BOX_HEIGHT = isRotated ? 80 : 55;  
 
         // Distancia dinámica
         const spacingX = MAX_BOX_WIDTH / blockSeats;
