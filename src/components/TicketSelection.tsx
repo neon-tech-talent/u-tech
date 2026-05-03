@@ -227,76 +227,130 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                             </button>
                         </header>
 
-                        <div className="flex-1 overflow-auto p-8 md:p-12 custom-scrollbar">
-                            <div className="space-y-12">
-                                {venueLayout?.zones_config[activeZoneKey]?.blocks?.map((block: any, bi: number) => {
-                                    const blockSeats = seats.filter(s => 
-                                        s.event_zone_id === selectedSection && 
-                                        // Filter seats belonging to this block (based on row range if we had it, 
-                                        // but since they are all in one zone, we just render them all in blocks for UI)
-                                        // Actually, let's just render the grid of the block and match seats by row/number
-                                        true
-                                    );
+                        <div className="flex-1 overflow-auto p-4 md:p-12 custom-scrollbar flex items-center justify-center">
+                            {(() => {
+                                const stageZone = Object.keys(venueLayout?.zones_config || {}).find(k => venueLayout?.zones_config[k].isStage);
+                                
+                                const getStageRelativePosition = (zone: string, stage?: string) => {
+                                    if (!stage || zone === stage) return 'NONE';
+                                    const pos: Record<string, {x: number, y: number}> = {
+                                        'Arriba': { x: 1, y: 0 },
+                                        'Abajo': { x: 1, y: 2 },
+                                        'Izquierda': { x: 0, y: 1 },
+                                        'Derecha': { x: 2, y: 1 },
+                                        'Centro': { x: 1, y: 1 }
+                                    };
+                                    const z = pos[zone];
+                                    const s = pos[stage];
+                                    if (!z || !s) return 'NONE';
+                                    const dx = s.x - z.x;
+                                    const dy = s.y - z.y;
+                                    if (Math.abs(dx) > Math.abs(dy)) {
+                                        return dx > 0 ? 'RIGHT' : 'LEFT';
+                                    } else {
+                                        return dy > 0 ? 'BOTTOM' : 'TOP';
+                                    }
+                                };
 
+                                const stagePos = getStageRelativePosition(activeZoneKey, stageZone);
+
+                                const StageGraphic = () => {
+                                    if (stagePos === 'NONE') return null;
+                                    const isVertical = stagePos === 'TOP' || stagePos === 'BOTTOM';
+                                    
                                     return (
-                                        <div key={bi} className="space-y-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-[2px] flex-1 bg-slate-100" />
-                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Bloque #{bi + 1}</span>
-                                                <div className="h-[2px] flex-1 bg-slate-100" />
-                                            </div>
-                                            <div className="flex flex-col gap-3 items-center overflow-x-auto pb-4">
-                                                {Array.from({ length: block.rows }).map((_, ri) => {
-                                                    const rowName = String.fromCharCode(64 + ri + 1);
-                                                    return (
-                                                        <div key={ri} className="flex gap-2 items-center min-w-max">
-                                                            <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
-                                                            <div className="flex gap-1.5">
-                                                                {Array.from({ length: block.seatsPerRow }).map((_, si) => {
-                                                                    const seatNum = (block.seatsPerRow - si).toString();
-                                                                    const seat = seats.find(s => 
-                                                                        s.event_zone_id === selectedSection && 
-                                                                        s.row_name === rowName && 
-                                                                        s.seat_number === seatNum
-                                                                    );
-                                                                    
-                                                                    const isSold = seat?.status === 'SOLD';
-                                                                    const isReserved = seat?.status === 'RESERVED' && seat.reserved_until && new Date(seat.reserved_until) > new Date();
-                                                                    
-                                                                    const virtualSeatId = `virtual_${selectedSection}_${rowName}_${seatNum}`;
-                                                                    const actualSeatId = seat ? seat.id : virtualSeatId;
-                                                                    const isSelected = selectedSeat === actualSeatId;
-                                                                    const isAvailable = !isSold && !isReserved;
-
-                                                                    return (
-                                                                        <button
-                                                                            key={si}
-                                                                            disabled={!isAvailable}
-                                                                            onClick={() => {
-                                                                                if (isAvailable) setSelectedSeat(actualSeatId);
-                                                                            }}
-                                                                            className={cn(
-                                                                                "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
-                                                                                isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
-                                                                                isSelected ? "bg-red-500 text-white shadow-lg shadow-red-500/40 ring-2 ring-red-200" :
-                                                                                "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
-                                                                            )}
-                                                                            title={isSold ? 'Vendido' : isReserved ? 'Reservado' : `Fila ${rowName}, Asiento ${seatNum}`}
-                                                                        >
-                                                                            {isSelected ? <Check className="w-4 h-4" /> : seatNum}
-                                                                        </button>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                            <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                        <div className={cn(
+                                            "flex items-center justify-center bg-green-500 shadow-[0_0_40px_rgba(34,197,94,0.5)] shrink-0 z-10 mx-auto",
+                                            isVertical ? "w-[300px] md:w-[500px] h-12 md:h-16" : "w-12 md:w-16 h-[250px] md:h-[400px]",
+                                            stagePos === 'TOP' ? "rounded-b-[60px] mb-8 lg:mb-12" :
+                                            stagePos === 'BOTTOM' ? "rounded-t-[60px] mt-8 lg:mt-12" :
+                                            stagePos === 'LEFT' ? "rounded-r-[60px] mr-8 lg:mr-12" :
+                                            "rounded-l-[60px] ml-8 lg:ml-12"
+                                        )}>
+                                            <span className={cn(
+                                                "text-white font-black text-[10px] md:text-xs tracking-[0.3em] uppercase",
+                                                !isVertical && "rotate-[-90deg] whitespace-nowrap"
+                                            )}>
+                                                Escenario
+                                            </span>
                                         </div>
                                     );
-                                })}
-                            </div>
+                                };
+
+                                return (
+                                    <div className={cn(
+                                        "flex justify-center items-center m-auto",
+                                        stagePos === 'TOP' ? 'flex-col' :
+                                        stagePos === 'BOTTOM' ? 'flex-col-reverse' :
+                                        stagePos === 'LEFT' ? 'flex-row' :
+                                        stagePos === 'RIGHT' ? 'flex-row-reverse' : 'flex-col'
+                                    )}>
+                                        <StageGraphic />
+                                        
+                                        <div className="space-y-12">
+                                            {venueLayout?.zones_config[activeZoneKey]?.blocks?.map((block: any, bi: number) => {
+                                                return (
+                                                    <div key={bi} className="space-y-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-[2px] flex-1 bg-slate-100" />
+                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Bloque #{bi + 1}</span>
+                                                            <div className="h-[2px] flex-1 bg-slate-100" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-3 items-center overflow-x-auto pb-4 custom-scrollbar">
+                                                            {Array.from({ length: block.rows }).map((_, ri) => {
+                                                                const rowName = String.fromCharCode(64 + ri + 1);
+                                                                return (
+                                                                    <div key={ri} className="flex gap-2 items-center min-w-max">
+                                                                        <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
+                                                                        <div className="flex gap-1.5 md:gap-2">
+                                                                            {Array.from({ length: block.seatsPerRow }).map((_, si) => {
+                                                                                const seatNum = (block.seatsPerRow - si).toString();
+                                                                                const seat = seats.find(s => 
+                                                                                    s.event_zone_id === selectedSection && 
+                                                                                    s.row_name === rowName && 
+                                                                                    s.seat_number === seatNum
+                                                                                );
+                                                                                
+                                                                                const isSold = seat?.status === 'SOLD';
+                                                                                const isReserved = seat?.status === 'RESERVED' && seat.reserved_until && new Date(seat.reserved_until) > new Date();
+                                                                                
+                                                                                const virtualSeatId = `virtual_${selectedSection}_${rowName}_${seatNum}`;
+                                                                                const actualSeatId = seat ? seat.id : virtualSeatId;
+                                                                                const isSelected = selectedSeat === actualSeatId;
+                                                                                const isAvailable = !isSold && !isReserved;
+
+                                                                                return (
+                                                                                    <button
+                                                                                        key={si}
+                                                                                        disabled={!isAvailable}
+                                                                                        onClick={() => {
+                                                                                            if (isAvailable) setSelectedSeat(actualSeatId);
+                                                                                        }}
+                                                                                        className={cn(
+                                                                                            "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
+                                                                                            isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
+                                                                                            isSelected ? "bg-red-500 text-white shadow-lg shadow-red-500/40 ring-2 ring-red-200" :
+                                                                                            "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
+                                                                                        )}
+                                                                                        title={isSold ? 'Vendido' : isReserved ? 'Reservado' : `Fila ${rowName}, Asiento ${seatNum}`}
+                                                                                    >
+                                                                                        {isSelected ? <Check className="w-4 h-4 md:w-5 md:h-5 text-white" /> : seatNum}
+                                                                                    </button>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                        <span className="w-6 text-[10px] font-black text-slate-300 text-center">{rowName}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                         <footer className="p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-4">
