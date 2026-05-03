@@ -187,7 +187,41 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
 
             if (orderError) throw orderError;
 
-            // 2. Create tickets
+            // 2. Resolve virtual seat or update existing
+            let finalSeatId = seatId;
+            if (seatId && seatId.startsWith('virtual_')) {
+                const parts = seatId.split('_');
+                const zoneId = parts[1];
+                const rowName = parts[2];
+                const seatNum = parts[3];
+
+                const { data: newSeat, error: seatErr } = await supabase
+                    .from("seats")
+                    .insert({
+                        event_zone_id: zoneId,
+                        row_name: rowName,
+                        seat_number: seatNum,
+                        status: 'SOLD',
+                        section_id: '8647acae-df04-4ec2-9111-2092cc77b319' // fallback generic uuid or 'none' if required
+                    })
+                    .select()
+                    .single();
+                
+                // If section_id uuid constraint fails, let's try without it
+                if (seatErr && seatErr.code === '22P02') {
+                    const fallback = await supabase.from("seats").insert({ event_zone_id: zoneId, row_name: rowName, seat_number: seatNum, status: 'SOLD' }).select().single();
+                    if (fallback.data) finalSeatId = fallback.data.id;
+                } else if (newSeat) {
+                    finalSeatId = newSeat.id;
+                }
+            } else if (seatId) {
+                await supabase
+                    .from("seats")
+                    .update({ status: 'SOLD' })
+                    .eq("id", seatId);
+            }
+
+            // 3. Create tickets
             const ticketsToInsert = items.map((item, idx) => {
                 const type = ticketTypes.find(t => t.id === item.typeId);
                 const basePrice = type?.price || 0;
@@ -198,7 +232,7 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
                     event_id: event.id,
                     order_id: order.id,
                     ticket_type_id: item.typeId,
-                    seat_id: idx === 0 ? (seatId || null) : null,
+                    seat_id: idx === 0 ? (finalSeatId || null) : null,
                     dni_holder: holders[item.id].dni,
                     name_holder: holders[item.id].name,
                     base_price: basePrice,
@@ -212,13 +246,6 @@ export default function CheckoutForm({ event, ticketTypes, selection, seatId }: 
                 .insert(ticketsToInsert);
 
             if (ticketsError) throw ticketsError;
-
-            if (seatId) {
-                await supabase
-                    .from("seats")
-                    .update({ status: 'SOLD' })
-                    .eq("id", seatId);
-            }
 
             if (user?.email) {
                 fetch("/api/send-ticket", {

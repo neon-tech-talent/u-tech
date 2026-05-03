@@ -262,24 +262,26 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                                                     
                                                                     const isSold = seat?.status === 'SOLD';
                                                                     const isReserved = seat?.status === 'RESERVED' && seat.reserved_until && new Date(seat.reserved_until) > new Date();
-                                                                    const isSelected = selectedSeat === seat?.id;
-                                                                    const isAvailable = !!seat && !isSold && !isReserved;
+                                                                    
+                                                                    const virtualSeatId = `virtual_${selectedSection}_${rowName}_${seatNum}`;
+                                                                    const actualSeatId = seat ? seat.id : virtualSeatId;
+                                                                    const isSelected = selectedSeat === actualSeatId;
+                                                                    const isAvailable = !isSold && !isReserved;
 
                                                                     return (
                                                                         <button
                                                                             key={si}
                                                                             disabled={!isAvailable}
                                                                             onClick={() => {
-                                                                                if (seat) setSelectedSeat(seat.id);
+                                                                                if (isAvailable) setSelectedSeat(actualSeatId);
                                                                             }}
                                                                             className={cn(
                                                                                 "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all transform active:scale-90",
-                                                                                !seat ? "bg-slate-100/50 text-slate-300 cursor-not-allowed border border-slate-200 border-dashed" :
                                                                                 isSold || isReserved ? "bg-slate-100 text-slate-300 cursor-not-allowed" :
                                                                                 isSelected ? "bg-red-500 text-white shadow-lg shadow-red-500/40 ring-2 ring-red-200" :
                                                                                 "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-200 border border-blue-100"
                                                                             )}
-                                                                            title={!seat ? 'Asiento no registrado' : `Fila ${rowName}, Asiento ${seatNum}`}
+                                                                            title={isSold ? 'Vendido' : isReserved ? 'Reservado' : `Fila ${rowName}, Asiento ${seatNum}`}
                                                                         >
                                                                             {isSelected ? <Check className="w-4 h-4" /> : seatNum}
                                                                         </button>
@@ -297,7 +299,20 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                             </div>
                         </div>
                         <footer className="p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escenario / Pantalla en esta dirección ↑</p>
+                            <div className="flex items-center gap-4">
+                                <div className="w-20 h-20 opacity-80 pointer-events-none drop-shadow-md">
+                                    <VenuePreview shape={venueLayout?.shape || 'RECT_H'} zones={venueLayout?.zones_config || {}} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest line-clamp-1">Ubicación del Escenario / Tarima</p>
+                                    <p className="text-xs font-black text-slate-800 mt-1 uppercase">
+                                        {(() => {
+                                            const stg = Object.keys(venueLayout?.zones_config || {}).find(k => venueLayout?.zones_config[k].isStage);
+                                            return stg ? `ZONA: ${stg}` : 'NO DEFINIDO';
+                                        })()}
+                                    </p>
+                                </div>
+                            </div>
                             
                             {selectedSeat && (
                                 <button
