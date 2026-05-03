@@ -32,17 +32,17 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
             'Centro': { x: 300, y: 300 },
             'Arriba': { x: 300, y: 200 },
             'Abajo': { x: 300, y: 400 },
-            'Izquierda': { x: 180, y: 300 },
-            'Derecha': { x: 420, y: 300 },
+            'Izquierda': { x: 140, y: 300 },
+            'Derecha': { x: 460, y: 300 },
         };
 
         if (shape === 'SEMICIRCLE') {
             return {
-                'Centro': { x: 300, y: 380 },
-                'Arriba': { x: 300, y: 280 },
-                'Abajo': { x: 300, y: 430 },
-                'Izquierda': { x: 200, y: 400 },
-                'Derecha': { x: 400, y: 400 },
+                'Centro': { x: 300, y: 320 },
+                'Arriba': { x: 300, y: 230 },
+                'Abajo': { x: 300, y: 410 },
+                'Izquierda': { x: 160, y: 360 },
+                'Derecha': { x: 440, y: 360 },
             };
         }
 
@@ -51,8 +51,18 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                 'Centro': { x: 300, y: 300 },
                 'Arriba': { x: 300, y: 150 },
                 'Abajo': { x: 300, y: 450 },
-                'Izquierda': { x: 210, y: 300 },
-                'Derecha': { x: 390, y: 300 },
+                'Izquierda': { x: 200, y: 300 },
+                'Derecha': { x: 400, y: 300 },
+            };
+        }
+
+        if (shape === 'OVAL') {
+            return {
+                'Centro': { x: 300, y: 300 },
+                'Arriba': { x: 300, y: 180 },
+                'Abajo': { x: 300, y: 420 },
+                'Izquierda': { x: 150, y: 300 },
+                'Derecha': { x: 450, y: 300 },
             };
         }
 
