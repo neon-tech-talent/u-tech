@@ -15,13 +15,13 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
     const getShapePath = () => {
         switch (shape) {
             case 'RECT_H':
-                return <rect x="50" y="150" width="500" height="300" rx="30" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <rect x="30" y="80" width="540" height="440" rx="40" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
             case 'RECT_V':
-                return <rect x="150" y="50" width="300" height="500" rx="30" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <rect x="80" y="30" width="440" height="540" rx="40" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
             case 'OVAL':
-                return <ellipse cx="300" cy="300" rx="250" ry="200" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <ellipse cx="300" cy="300" rx="270" ry="250" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
             case 'SEMICIRCLE':
-                return <path d="M 50 450 A 250 250 0 0 1 550 450 L 550 450 L 50 450 Z" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <path d="M 30 500 A 270 270 0 0 1 570 500 L 570 500 L 30 500 Z" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
             default:
                 return null;
         }
@@ -31,31 +31,6 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
     // Identificar dónde está el escenario globalmente
     const stageZoneKey = Object.keys(zones).find(k => zones[k]?.isStage);
     const isGlobalRotated = stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha';
-
-    // Calcular tamaño de asiento universal basándose en la zona más densa
-    let globalSpacing = 15;
-    Object.entries(zones).forEach(([key, config]: [string, any]) => {
-        if (!config.active || config.isStage || config.type !== 'SEATED') return;
-        
-        let rows = config.blocks?.[0]?.rows || 1;
-        let seatsPerRow = config.blocks?.[0]?.seatsPerRow || 1;
-        
-        const blockRows = isGlobalRotated ? seatsPerRow : rows;
-        const blockSeats = isGlobalRotated ? rows : seatsPerRow;
-
-        const MAX_BOX_WIDTH = isGlobalRotated ? 55 : 100;  
-        const MAX_BOX_HEIGHT = isGlobalRotated ? 80 : 55;  
-
-        const spacingX = MAX_BOX_WIDTH / blockSeats;
-        const spacingY = MAX_BOX_HEIGHT / blockRows;
-        
-        const zoneSpacing = Math.min(spacingX, spacingY, 15);
-        if (zoneSpacing < globalSpacing) {
-            globalSpacing = zoneSpacing;
-        }
-    });
-
-    const seatSize = Math.max(2.5, globalSpacing * 0.85);
 
     let seatRotation = 0;
     if (stageZoneKey === 'Izquierda') seatRotation = -90;
@@ -67,39 +42,39 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
     const getZonePositions = () => {
         const base = {
             'Centro': { x: 300, y: 300 },
-            'Arriba': { x: 300, y: isGlobalRotated ? 215 : 190 },
-            'Abajo': { x: 300, y: isGlobalRotated ? 385 : 410 },
-            'Izquierda': { x: isGlobalRotated ? 140 : 120, y: 300 },
-            'Derecha': { x: isGlobalRotated ? 460 : 480, y: 300 },
+            'Arriba': { x: 300, y: isGlobalRotated ? 170 : 150 },
+            'Abajo': { x: 300, y: isGlobalRotated ? 430 : 450 },
+            'Izquierda': { x: isGlobalRotated ? 110 : 100, y: 300 },
+            'Derecha': { x: isGlobalRotated ? 490 : 500, y: 300 },
         };
 
         if (shape === 'SEMICIRCLE') {
             return {
-                'Centro': { x: 300, y: 370 },
-                'Arriba': { x: 300, y: isGlobalRotated ? 280 : 250 },
-                'Abajo': { x: 300, y: 480 },
-                'Izquierda': { x: isGlobalRotated ? 170 : 150, y: 400 },
-                'Derecha': { x: isGlobalRotated ? 430 : 450, y: 400 },
+                'Centro': { x: 300, y: 380 },
+                'Arriba': { x: 300, y: isGlobalRotated ? 260 : 230 },
+                'Abajo': { x: 300, y: 530 },
+                'Izquierda': { x: isGlobalRotated ? 140 : 120, y: 420 },
+                'Derecha': { x: isGlobalRotated ? 460 : 480, y: 420 },
             };
         }
 
         if (shape === 'RECT_V') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: 150 },
-                'Abajo': { x: 300, y: 450 },
-                'Izquierda': { x: isGlobalRotated ? 210 : 180, y: 300 },
-                'Derecha': { x: isGlobalRotated ? 390 : 420, y: 300 },
+                'Arriba': { x: 300, y: 110 },
+                'Abajo': { x: 300, y: 490 },
+                'Izquierda': { x: isGlobalRotated ? 180 : 150, y: 300 },
+                'Derecha': { x: isGlobalRotated ? 420 : 450, y: 300 },
             };
         }
 
         if (shape === 'OVAL') {
             return {
                 'Centro': { x: 300, y: 300 },
-                'Arriba': { x: 300, y: isGlobalRotated ? 200 : 160 },
-                'Abajo': { x: 300, y: isGlobalRotated ? 400 : 440 },
-                'Izquierda': { x: isGlobalRotated ? 170 : 140, y: 300 },
-                'Derecha': { x: isGlobalRotated ? 430 : 460, y: 300 },
+                'Arriba': { x: 300, y: isGlobalRotated ? 180 : 130 },
+                'Abajo': { x: 300, y: isGlobalRotated ? 420 : 470 },
+                'Izquierda': { x: isGlobalRotated ? 140 : 110, y: 300 },
+                'Derecha': { x: isGlobalRotated ? 460 : 490, y: 300 },
             };
         }
 
@@ -108,30 +83,88 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
 
     const zonePositions = getZonePositions();
 
-    const renderMiniSeats = (rows: number, seatsPerRow: number, cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
+    // Calcular tamaño de asiento universal basándose en la zona más densa
+    let globalSpacing = 15;
+    Object.entries(zones).forEach(([key, config]: [string, any]) => {
+        if (!config.active || config.isStage || config.type !== 'SEATED' || !config.blocks?.length) return;
+        
+        let totalRows = 0;
+        let maxSeatsPerRow = 0;
+        config.blocks.forEach((block: any) => {
+            totalRows += (block.rows || 1);
+            maxSeatsPerRow = Math.max(maxSeatsPerRow, (block.seatsPerRow || 1));
+        });
+
+        const blockRows = isGlobalRotated ? maxSeatsPerRow : totalRows;
+        const blockSeats = isGlobalRotated ? totalRows : maxSeatsPerRow;
+
+        // Aumentamos el espacio disponible para cada caja, pero respetando los límites entre zonas
+        const MAX_BOX_WIDTH = isGlobalRotated ? 140 : 160;  
+        const MAX_BOX_HEIGHT = isGlobalRotated ? 110 : 140;  
+
+        const spacingX = MAX_BOX_WIDTH / (blockSeats || 1);
+        const spacingY = MAX_BOX_HEIGHT / (blockRows || 1);
+        
+        const zoneSpacing = Math.min(spacingX, spacingY, 15);
+        if (zoneSpacing < globalSpacing) {
+            globalSpacing = zoneSpacing;
+        }
+    });
+
+    const seatSize = Math.max(2.0, globalSpacing * 0.8);
+
+    const renderMiniSeats = (blocks: any[], cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
+        if (!blocks || blocks.length === 0) return null;
+        
         const dots = [];
-        const blockRows = isRotated ? (seatsPerRow || 1) : (rows || 1);
-        const blockSeats = isRotated ? (rows || 1) : (seatsPerRow || 1);
-
-        const startX = cx - ((blockSeats - 1) * globalSpacing) / 2;
-        const startY = cy - ((blockRows - 1) * globalSpacing) / 2;
-
         const colorClass = active ? "text-blue-400 group-hover/zone:text-blue-300 transition-colors duration-300" : "text-blue-800/50";
 
-        for (let rIdx = 0; rIdx < blockRows; rIdx++) {
-            for (let sIdx = 0; sIdx < blockSeats; sIdx++) {
-                const px = startX + sIdx * globalSpacing;
-                const py = startY + rIdx * globalSpacing;
-                dots.push(
-                    <use 
-                        key={`seat-${rIdx}-${sIdx}`}
-                        href="#seat-template"
-                        transform={`translate(${px}, ${py}) rotate(${seatRotation}) scale(${seatSize})`}
-                        className={colorClass}
-                    />
-                );
+        // Calcular dimensiones totales
+        let totalRows = 0;
+        let maxSeatsPerRow = 0;
+        blocks.forEach(b => {
+            totalRows += (b.rows || 1);
+            maxSeatsPerRow = Math.max(maxSeatsPerRow, (b.seatsPerRow || 1));
+        });
+
+        const totalBlockRows = isRotated ? maxSeatsPerRow : totalRows;
+        const totalBlockSeats = isRotated ? totalRows : maxSeatsPerRow;
+
+        // Gap entre bloques
+        const blockGap = globalSpacing * 0.5;
+        const totalHeightWithGaps = ((totalBlockRows - 1) * globalSpacing) + ((blocks.length - 1) * blockGap);
+        const totalWidth = (totalBlockSeats - 1) * globalSpacing;
+
+        let currentYOffset = cy - totalHeightWithGaps / 2;
+        let currentXOffset = cx - totalWidth / 2;
+
+        blocks.forEach((block, bIdx) => {
+            const bRows = isRotated ? (block.seatsPerRow || 1) : (block.rows || 1);
+            const bSeats = isRotated ? (block.rows || 1) : (block.seatsPerRow || 1);
+
+            for (let rIdx = 0; rIdx < bRows; rIdx++) {
+                for (let sIdx = 0; sIdx < bSeats; sIdx++) {
+                    const px = isRotated ? (currentXOffset + rIdx * globalSpacing) : (currentXOffset + sIdx * globalSpacing);
+                    const py = isRotated ? (currentYOffset + sIdx * globalSpacing) : (currentYOffset + rIdx * globalSpacing);
+                    
+                    dots.push(
+                        <use 
+                            key={`block-${bIdx}-seat-${rIdx}-${sIdx}`}
+                            href="#seat-template"
+                            transform={`translate(${px}, ${py}) rotate(${seatRotation}) scale(${seatSize})`}
+                            className={colorClass}
+                        />
+                    );
+                }
             }
-        }
+            // Mover el offset para el siguiente bloque
+            if (isRotated) {
+                currentXOffset += (bRows * globalSpacing) + blockGap;
+            } else {
+                currentYOffset += (bRows * globalSpacing) + blockGap;
+            }
+        });
+
         return dots;
     };
 
@@ -217,8 +250,8 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
                                     {/* Gráficos del contenido */}
                                     {isSeated ? (
                                         <g>
-                                            {/* Extrae rows y compila asientos */}
-                                            {renderMiniSeats(config.blocks?.[0]?.rows || 5, config.blocks?.[0]?.seatsPerRow || 10, pos.x, pos.y - 5, config.active, isRotated)}
+                                            {/* Renderiza todos los bloques de la zona */}
+                                            {renderMiniSeats(config.blocks || [], pos.x, pos.y - 5, config.active, isRotated)}
                                         </g>
                                     ) : (
                                         <g>
