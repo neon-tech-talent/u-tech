@@ -123,22 +123,34 @@ export default function TicketScanner() {
                 return;
             }
 
+            const cleanTicketId = ticketId.trim();
+            console.log("Scanning ticket ID:", cleanTicketId);
+
             const { data, error } = await supabase
                 .from("tickets")
                 .select("*, ticket_types(name)")
-                .eq("id", ticketId.length === 36 ? ticketId : "00000000-0000-0000-0000-000000000000") // Basic UUID check
-                .or(`id.eq.${ticketId},qr_code.eq.${ticketId}`) // Try both ID and legacy QR code
+                .or(`id.eq.${cleanTicketId},qr_code.eq.${cleanTicketId}`)
                 .maybeSingle();
 
             if (!mountedRef.current) return;
 
-            if (error || !data) {
+            if (error) {
+                console.error("Supabase error fetching ticket:", error);
                 setScanResult("invalid");
                 return;
             }
 
+            if (!data) {
+                console.warn("No ticket found with ID/QR:", cleanTicketId);
+                setScanResult("invalid");
+                return;
+            }
+
+            console.log("Ticket found:", data);
+
             // 2. Check if ticket belongs to the selected event
             if (data.event_id !== selectedEventId) {
+                console.warn("Ticket event mismatch. Expected:", selectedEventId, "Found:", data.event_id);
                 setTicketData(data);
                 setScanResult("wrong_event");
                 return;
