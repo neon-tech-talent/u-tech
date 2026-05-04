@@ -31,6 +31,37 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
     const stageZoneKey = Object.keys(zones).find(k => zones[k]?.isStage);
     const isGlobalRotated = stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha';
 
+    // Calcular tamaño de asiento universal basándose en la zona más densa
+    let globalSpacing = 15;
+    Object.entries(zones).forEach(([key, config]: [string, any]) => {
+        if (!config.active || config.isStage || config.type !== 'SEATED') return;
+        
+        let rows = config.blocks?.[0]?.rows || 1;
+        let seatsPerRow = config.blocks?.[0]?.seatsPerRow || 1;
+        
+        const blockRows = isGlobalRotated ? seatsPerRow : rows;
+        const blockSeats = isGlobalRotated ? rows : seatsPerRow;
+
+        const MAX_BOX_WIDTH = isGlobalRotated ? 55 : 100;  
+        const MAX_BOX_HEIGHT = isGlobalRotated ? 80 : 55;  
+
+        const spacingX = MAX_BOX_WIDTH / blockSeats;
+        const spacingY = MAX_BOX_HEIGHT / blockRows;
+        
+        const zoneSpacing = Math.min(spacingX, spacingY, 15);
+        if (zoneSpacing < globalSpacing) {
+            globalSpacing = zoneSpacing;
+        }
+    });
+
+    const seatSize = Math.max(2.5, globalSpacing * 0.85);
+
+    let seatRotation = 0;
+    if (stageZoneKey === 'Izquierda') seatRotation = -90;
+    else if (stageZoneKey === 'Derecha') seatRotation = 90;
+    else if (stageZoneKey === 'Arriba') seatRotation = 0;
+    else if (stageZoneKey === 'Abajo') seatRotation = 180;
+
     // Positions spread across the 600x600 viewBox
     const getZonePositions = () => {
         const base = {
@@ -81,29 +112,21 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
         const blockRows = isRotated ? (seatsPerRow || 1) : (rows || 1);
         const blockSeats = isRotated ? (rows || 1) : (seatsPerRow || 1);
 
-        // Ajustar estáticamente para nunca rebasar el layout interno de la figura
-        const MAX_BOX_WIDTH = isRotated ? 55 : 100;  
-        const MAX_BOX_HEIGHT = isRotated ? 80 : 55;  
+        const startX = cx - ((blockSeats - 1) * globalSpacing) / 2;
+        const startY = cy - ((blockRows - 1) * globalSpacing) / 2;
 
-        // Distancia dinámica
-        const spacingX = MAX_BOX_WIDTH / blockSeats;
-        const spacingY = MAX_BOX_HEIGHT / blockRows;
-        const spacing = Math.min(spacingX, spacingY, 15); 
-
-        const r = Math.max(1.5, spacing * 0.35); 
-
-        const startX = cx - ((blockSeats - 1) * spacing) / 2;
-        const startY = cy - ((blockRows - 1) * spacing) / 2;
+        const colorClass = active ? "text-blue-400 group-hover/zone:text-blue-300 transition-colors duration-300" : "text-blue-800/50";
 
         for (let rIdx = 0; rIdx < blockRows; rIdx++) {
             for (let sIdx = 0; sIdx < blockSeats; sIdx++) {
+                const px = startX + sIdx * globalSpacing;
+                const py = startY + rIdx * globalSpacing;
                 dots.push(
-                    <circle 
+                    <use 
                         key={`seat-${rIdx}-${sIdx}`}
-                        cx={startX + sIdx * spacing} 
-                        cy={startY + rIdx * spacing} 
-                        r={r} 
-                        className={active ? "fill-blue-400 group-hover/zone:fill-blue-300 transition-colors duration-300" : "fill-blue-800/50"} 
+                        href="#seat-template"
+                        transform={`translate(${px}, ${py}) rotate(${seatRotation}) scale(${seatSize})`}
+                        className={colorClass}
                     />
                 );
             }
@@ -123,6 +146,12 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                         <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
                         <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
                     </radialGradient>
+                    <g id="seat-template" fill="currentColor">
+                        {/* Base/Cojín */}
+                        <rect x="-0.35" y="-0.4" width="0.7" height="0.6" rx="0.15" />
+                        {/* Respaldo */}
+                        <rect x="-0.45" y="0.2" width="0.9" height="0.3" rx="0.1" />
+                    </g>
                 </defs>
 
                 {/* Forma principal del recinto */}
