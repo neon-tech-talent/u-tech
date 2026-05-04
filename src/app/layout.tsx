@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,12 +18,14 @@ export default function RootLayout({
 }) {
     return (
         <html lang="es">
-            <body className={`${inter.className} text-slate-100 antialiased`}>
-                <div className="ticket-background-system" aria-hidden="true" />
-                <Navbar />
-                <main className="min-h-screen relative z-0">
-                    {children}
-                </main>
+            <body className={`${inter.className} antialiased`}>
+                <ThemeProvider>
+                    <div className="ticket-background-system" aria-hidden="true" />
+                    <Navbar />
+                    <main className="min-h-screen relative z-0">
+                        {children}
+                    </main>
+                </ThemeProvider>
             </body>
         </html>
     );
