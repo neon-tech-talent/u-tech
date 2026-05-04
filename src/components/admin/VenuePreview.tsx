@@ -116,7 +116,7 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
     const renderMiniSeats = (blocks: any[], cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
         if (!blocks || blocks.length === 0) return null;
         
-        const dots = [];
+        const dots: JSX.Element[] = [];
         const colorClass = active ? "text-blue-400 group-hover/zone:text-blue-300 transition-colors duration-300" : "text-blue-800/50";
 
         // Calcular dimensiones totales
