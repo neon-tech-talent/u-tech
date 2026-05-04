@@ -14,6 +14,7 @@ export default function TicketScanner() {
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [isStarting, setIsStarting] = useState(false);
+    const [errorReason, setErrorReason] = useState<string | null>(null);
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
     const [loadingEvents, setLoadingEvents] = useState(true);
@@ -100,6 +101,7 @@ export default function TicketScanner() {
     const handleScanSuccess = async (decodedText: string) => {
         if (processingRef.current || !mountedRef.current) return;
         processingRef.current = true;
+        setErrorReason(null);
 
         await stopCamera();
 
@@ -119,6 +121,7 @@ export default function TicketScanner() {
             }
 
             if (!ticketId) {
+                setErrorReason("El QR no contiene un ID válido.");
                 setScanResult("invalid");
                 return;
             }
@@ -136,12 +139,14 @@ export default function TicketScanner() {
 
             if (error) {
                 console.error("Supabase error fetching ticket:", error);
+                setErrorReason(`Error DB: ${error.message}`);
                 setScanResult("invalid");
                 return;
             }
 
             if (!data) {
                 console.warn("No ticket found with ID/QR:", cleanTicketId);
+                setErrorReason(`No se encontró ticket con ID: ${cleanTicketId}`);
                 setScanResult("invalid");
                 return;
             }
@@ -159,17 +164,24 @@ export default function TicketScanner() {
             // 3. Validate TOTP if token is present
             if (scannedToken) {
                 const secret = (data.qr_seed || data.qr_code).replace(/-/g, "");
-                const totp = new OTPAuth.TOTP({
-                    issuer: "U-Ticket",
-                    label: data.id,
-                    algorithm: "SHA1",
-                    digits: 6,
-                    period: 30,
-                    secret: OTPAuth.Secret.fromHex(secret),
-                });
+                try {
+                    const totp = new OTPAuth.TOTP({
+                        issuer: "U-Ticket",
+                        label: data.id,
+                        algorithm: "SHA1",
+                        digits: 6,
+                        period: 30,
+                        secret: OTPAuth.Secret.fromHex(secret),
+                    });
 
-                const delta = totp.validate({ token: scannedToken, window: 1 });
-                if (delta === null) {
+                    const delta = totp.validate({ token: scannedToken, window: 1 });
+                    if (delta === null) {
+                        setErrorReason("Token TOTP inválido o expirado. Asegúrate de que la hora del dispositivo sea correcta.");
+                        setScanResult("invalid");
+                        return;
+                    }
+                } catch (totpErr: any) {
+                    setErrorReason(`Error validando TOTP: ${totpErr.message}`);
                     setScanResult("invalid");
                     return;
                 }
@@ -197,9 +209,12 @@ export default function TicketScanner() {
             } else {
                 setScanResult("invalid");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            if (mountedRef.current) setScanResult("invalid");
+            if (mountedRef.current) {
+                setErrorReason(`Excepción: ${err.message}`);
+                setScanResult("invalid");
+            }
         }
     };
 
@@ -460,6 +475,12 @@ export default function TicketScanner() {
                                         ? "Esta entrada pertenece a otro evento." 
                                         : "El QR no corresponde a ninguna entrada válida."}
                                 </p>
+                                {errorReason && (
+                                    <div className="mt-4 p-3 bg-red-100 rounded-xl text-xs text-red-800 font-medium break-words text-left border border-red-200">
+                                        <span className="font-bold block mb-1">Detalle del error (Debug):</span>
+                                        {errorReason}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
