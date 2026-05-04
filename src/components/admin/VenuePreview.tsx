@@ -6,9 +6,10 @@ interface VenuePreviewProps {
     shape: 'OVAL' | 'RECT_H' | 'RECT_V' | 'SEMICIRCLE';
     zones: any;
     onZoneClick?: (zoneName: string) => void;
+    highlightZone?: string;
 }
 
-export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreviewProps) {
+export default function VenuePreview({ shape, zones, onZoneClick, highlightZone }: VenuePreviewProps) {
     
     // Generates a path for the main container
     const getShapePath = () => {
@@ -167,6 +168,8 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                     // Rotar todas las matrices si el Escenario está a los lados para que apunten hacia él
                     const isRotated = !isStage && (stageZoneKey === 'Izquierda' || stageZoneKey === 'Derecha');
 
+                    const isHighlighted = highlightZone === key;
+
                     return (
                         <g 
                             key={key} 
@@ -179,6 +182,11 @@ export default function VenuePreview({ shape, zones, onZoneClick }: VenuePreview
                         >
                             {/* Glow de la zona */}
                             <circle cx={pos.x} cy={pos.y} r={isStage ? "80" : "60"} fill={isStage ? "url(#stageGlow)" : "url(#zoneGlow)"} className="opacity-0 group-hover/zone:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                            {/* Anillo de destacado para la zona seleccionada */}
+                            {isHighlighted && (
+                                <circle cx={pos.x} cy={pos.y} r="65" fill="rgba(251,191,36,0.18)" stroke="#f59e0b" strokeWidth="3" className="pointer-events-none" />
+                            )}
 
                             {/* Representación visual de la zona */}
                             {isStage ? (

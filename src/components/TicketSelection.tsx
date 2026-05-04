@@ -260,16 +260,18 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                     
                                     return (
                                         <div className={cn(
-                                            "flex items-center justify-center bg-green-500 shadow-[0_0_60px_rgba(34,197,94,0.6)] shrink-0 z-10 mx-auto",
-                                            isVertical ? "w-[90%] max-w-[1200px] h-24 md:h-32" : "w-24 md:w-32 h-[500px] md:h-[700px]",
-                                            stagePos === 'TOP' ? "rounded-b-[120px] mb-8 lg:mb-12" :
-                                            stagePos === 'BOTTOM' ? "rounded-t-[120px] mt-8 lg:mt-12" :
-                                            stagePos === 'LEFT' ? "rounded-r-[120px] mr-8 lg:mr-12" :
-                                            "rounded-l-[120px] ml-8 lg:ml-12"
+                                            "flex items-center justify-center bg-green-500 shadow-[0_0_60px_rgba(34,197,94,0.6)] shrink-0 z-10 overflow-hidden",
+                                            isVertical ? "w-[90%] max-w-[800px] h-20 md:h-28 mx-auto" : "w-20 md:w-28 h-[300px] md:h-[480px]",
+                                            stagePos === 'TOP' ? "rounded-b-[100px] mb-6" :
+                                            stagePos === 'BOTTOM' ? "rounded-t-[100px] mt-6" :
+                                            stagePos === 'LEFT' ? "rounded-r-[100px] mr-6" :
+                                            "rounded-l-[100px] ml-6"
                                         )}>
                                             <span className={cn(
-                                                "text-white font-black text-sm md:text-2xl tracking-[0.5em] md:tracking-[1.5em] uppercase",
-                                                !isVertical && "rotate-[-90deg] whitespace-nowrap"
+                                                "text-white font-black uppercase select-none px-4",
+                                                isVertical
+                                                    ? "text-base md:text-xl tracking-[0.3em] md:tracking-[0.6em]"
+                                                    : "text-[10px] md:text-xs tracking-[0.2em] rotate-[-90deg] whitespace-nowrap"
                                             )}>
                                                 Escenario
                                             </span>
@@ -352,17 +354,24 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                 );
                             })()}
                         </div>
-                        <footer className="p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-20 h-20 opacity-80 pointer-events-none drop-shadow-md">
-                                    <VenuePreview shape={venueLayout?.shape || 'RECT_H'} zones={venueLayout?.zones_config || {}} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest line-clamp-1">Ubicación del Escenario / Tarima</p>
-                                    <p className="text-xs font-black text-slate-800 mt-1 uppercase">
+                        <footer className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4">
+                            <div className="flex items-start gap-5">
+                                {/* Mini-mapa tarima grande con zona destacada */}
+                                <div className="relative shrink-0">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Ubicación del Escenario / Tarima</p>
+                                    <div className="w-40 h-40 md:w-52 md:h-52 opacity-100 pointer-events-none drop-shadow-xl rounded-2xl overflow-hidden"
+                                        style={{ filter: 'drop-shadow(0 4px 24px rgba(59,130,246,0.15))' }}
+                                    >
+                                        <VenuePreview 
+                                            shape={venueLayout?.shape || 'RECT_H'} 
+                                            zones={venueLayout?.zones_config || {}} 
+                                            highlightZone={activeZoneKey}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest text-center">
                                         {(() => {
                                             const stg = Object.keys(venueLayout?.zones_config || {}).find(k => venueLayout?.zones_config[k].isStage);
-                                            return stg ? `ZONA: ${stg}` : 'NO DEFINIDO';
+                                            return stg ? `Escenario: ${stg}` : 'Sin escenario';
                                         })()}
                                     </p>
                                 </div>
