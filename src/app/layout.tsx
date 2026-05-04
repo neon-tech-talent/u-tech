@@ -17,9 +17,10 @@ export default function RootLayout({
 }) {
     return (
         <html lang="es">
-            <body className={`${inter.className} bg-slate-50 text-slate-900`}>
+            <body className={`${inter.className} text-slate-100 antialiased`}>
+                <div className="ticket-background-system" aria-hidden="true" />
                 <Navbar />
-                <main className="min-h-screen">
+                <main className="min-h-screen relative z-0">
                     {children}
                 </main>
             </body>

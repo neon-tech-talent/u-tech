@@ -19,11 +19,41 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: #f8fafc;
+  background-color: #0b0f19;
+}
+
+.ticket-background-system {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #0b0f19;
+  background-image: url('/patterns/ticket-pattern.svg');
+  background-repeat: repeat;
+  background-size: 120px;
+  overflow: hidden;
+}
+
+.ticket-background-system::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top center, rgba(59, 130, 246, 0.08) 0%, transparent 70%),
+              linear-gradient(to bottom, rgba(11, 15, 25, 0.4) 0%, #0b0f19 100%);
+  pointer-events: none;
+}
+
+/* Custom scrollbar for premium look */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
