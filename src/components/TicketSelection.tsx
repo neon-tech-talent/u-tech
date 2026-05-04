@@ -199,35 +199,35 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
             )}
 
             {showMap && activeZoneKey && (
-                <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-full">
-                        <header className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 uppercase">Zona: {activeZoneKey}</h3>
-                                <div className="flex items-center gap-4 mt-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-blue-600" />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponible</span>
+                <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-2 md:p-8 animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-5xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[96vh]">
+                        <header className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                            <div className="flex items-center gap-4 flex-wrap">
+                                <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Zona: {activeZoneKey}</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full bg-blue-600" />
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Disponible</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-slate-200" />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupado</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full bg-slate-200" />
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ocupado</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tu Selección</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tu Selección</span>
                                     </div>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setShowMap(false)}
-                                className="p-4 hover:bg-white rounded-2xl transition-all group"
+                                className="p-2 hover:bg-slate-100 rounded-xl transition-all group shrink-0"
                             >
-                                <X className="w-6 h-6 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                                <X className="w-5 h-5 text-slate-400 group-hover:text-slate-900 transition-colors" />
                             </button>
                         </header>
 
-                        <div className="flex-1 overflow-auto p-4 md:p-12 custom-scrollbar flex items-center justify-center">
+                        <div className="flex-1 overflow-auto p-3 md:p-8 custom-scrollbar flex items-center justify-center min-h-[320px]">
                             {(() => {
                                 const stageZone = Object.keys(venueLayout?.zones_config || {}).find(k => venueLayout?.zones_config[k].isStage);
                                 
@@ -354,29 +354,30 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                 );
                             })()}
                         </div>
-                        <footer className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4">
-                            <div className="flex items-start gap-5">
-                                {/* Mini-mapa tarima grande con zona destacada */}
-                                <div className="relative shrink-0">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Ubicación del Escenario / Tarima</p>
-                                    <div className="w-40 h-40 md:w-52 md:h-52 opacity-100 pointer-events-none drop-shadow-xl rounded-2xl overflow-hidden"
-                                        style={{ filter: 'drop-shadow(0 4px 24px rgba(59,130,246,0.15))' }}
-                                    >
-                                        <VenuePreview 
-                                            shape={venueLayout?.shape || 'RECT_H'} 
-                                            zones={venueLayout?.zones_config || {}} 
-                                            highlightZone={activeZoneKey}
-                                        />
-                                    </div>
-                                    <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest text-center">
+                        <footer className="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4 shrink-0">
+                            {/* Tarima horizontal */}
+                            <div className="flex items-center gap-4 shrink-0">
+                                <div className="w-24 h-24 md:w-32 md:h-32 pointer-events-none rounded-xl overflow-hidden shrink-0"
+                                    style={{ filter: 'drop-shadow(0 2px 12px rgba(59,130,246,0.15))' }}
+                                >
+                                    <VenuePreview 
+                                        shape={venueLayout?.shape || 'RECT_H'} 
+                                        zones={venueLayout?.zones_config || {}} 
+                                        highlightZone={activeZoneKey}
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ubicación del Escenario / Tarima</p>
+                                    <p className="text-xs font-black text-blue-600 mt-0.5 uppercase">
                                         {(() => {
                                             const stg = Object.keys(venueLayout?.zones_config || {}).find(k => venueLayout?.zones_config[k].isStage);
                                             return stg ? `Escenario: ${stg}` : 'Sin escenario';
                                         })()}
                                     </p>
+                                    <p className="text-[9px] font-bold text-amber-500 mt-1 uppercase tracking-widest">&#9733; Zona actual: {activeZoneKey}</p>
                                 </div>
                             </div>
-                            
+
                             {selectedSeat && (
                                 <button
                                     onClick={() => {
@@ -392,7 +393,7 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                         }
                                         setShowMap(false);
                                     }}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-tighter shadow-xl shadow-blue-200 transition-all animate-in slide-in-from-right-4"
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-tighter shadow-xl shadow-blue-200 transition-all animate-in slide-in-from-right-4 shrink-0"
                                 >
                                     Confirmar Asiento
                                 </button>
