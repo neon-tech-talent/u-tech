@@ -174,9 +174,9 @@ export default function TicketScanner() {
                         secret: OTPAuth.Secret.fromHex(secret),
                     });
 
-                    const delta = totp.validate({ token: scannedToken, window: 1 });
+                    const delta = totp.validate({ token: scannedToken, window: 5 });
                     if (delta === null) {
-                        setErrorReason("Token TOTP inválido o expirado. Asegúrate de que la hora del dispositivo sea correcta.");
+                        setErrorReason(`Token TOTP inválido o expirado. (Token escaneado: ${scannedToken}). Verifica que la hora de la PC y el celular coincidan.`);
                         setScanResult("invalid");
                         return;
                     }
