@@ -70,3 +70,18 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Global Select/Option Visibility Fixes */
+select {
+  color: inherit;
+}
+
+option {
+  color: #0f172a; /* Default to dark text for light mode */
+  background-color: #ffffff;
+}
+
+.dark option {
+  color: #f8fafc;
+  background-color: #1e293b;
+}

@@ -412,9 +412,9 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Sector</label>
+                            <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase ml-2">Sector</label>
                             <select
-                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
+                                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm text-slate-900 dark:text-white"
                                 value={selectedSection}
                                 onChange={(e) => {
                                     setSelectedSection(e.target.value);
@@ -423,34 +423,34 @@ export default function TicketSelection({ event, ticketTypes }: TicketSelectionP
                                     setCart({}); // Clear cart when changing section to avoid conflicts
                                 }}
                             >
-                                <option value="">Seleccionar...</option>
-                                {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">Seleccionar...</option>
+                                {sections.map(s => <option key={s.id} value={s.id} className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">{s.name}</option>)}
                             </select>
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Fila</label>
+                            <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase ml-2">Fila</label>
                             <select
-                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm disabled:opacity-50"
+                                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm text-slate-900 dark:text-white disabled:opacity-50"
                                 value={selectedRow}
                                 disabled={!selectedSection}
                                 onChange={(e) => { setSelectedRow(e.target.value); setSelectedSeat(""); }}
                             >
-                                <option value="">Seleccionar...</option>
-                                {rows.map(r => <option key={r} value={r}>Fila {r}</option>)}
+                                <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">Seleccionar...</option>
+                                {rows.map(r => <option key={r} value={r} className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">Fila {r}</option>)}
                             </select>
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Asiento</label>
+                            <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase ml-2">Asiento</label>
                             <select
-                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm disabled:opacity-50"
+                                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm text-slate-900 dark:text-white disabled:opacity-50"
                                 value={selectedSeat}
                                 disabled={!selectedRow}
                                 onChange={(e) => setSelectedSeat(e.target.value)}
                             >
-                                <option value="">Seleccionar...</option>
-                                {availableSeats.map(s => <option key={s.id} value={s.id}>Asiento {s.seat_number}</option>)}
+                                <option value="" className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">Seleccionar...</option>
+                                {availableSeats.map(s => <option key={s.id} value={s.id} className="text-slate-900 dark:text-white bg-white dark:bg-slate-800">Asiento {s.seat_number}</option>)}
                             </select>
                         </div>
                     </div>

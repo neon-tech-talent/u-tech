@@ -342,13 +342,13 @@ export default function TicketScanner() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <select
-                                    className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-sm appearance-none cursor-pointer"
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-sm text-slate-900 dark:text-white appearance-none cursor-pointer"
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
                                 >
-                                    <option value="all">Todos los estados</option>
-                                    <option value="active">Activos / Futuros</option>
-                                    <option value="finished">Finalizados</option>
+                                    <option value="all" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Todos los estados</option>
+                                    <option value="active" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Activos / Futuros</option>
+                                    <option value="finished" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Finalizados</option>
                                 </select>
 
                                 <input

@@ -556,13 +556,13 @@ export default function NewEvent() {
                         <div className="space-y-4">
                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Seleccionar Mapa de Recinto</label>
                             <select 
-                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold appearance-none cursor-pointer"
+                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all font-bold text-slate-900 dark:text-white appearance-none cursor-pointer"
                                 value={selectedLayoutId}
                                 onChange={(e) => setSelectedLayoutId(e.target.value)}
                             >
-                                <option value="">Selecciona un diseño...</option>
+                                <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Selecciona un diseño...</option>
                                 {venueLayouts.map(l => (
-                                    <option key={l.id} value={l.id}>{l.name} ({l.shape})</option>
+                                    <option key={l.id} value={l.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{l.name} ({l.shape})</option>
                                 ))}
                             </select>
                         </div>
