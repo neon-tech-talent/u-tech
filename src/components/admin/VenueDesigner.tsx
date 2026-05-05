@@ -143,7 +143,7 @@ export default function VenueDesigner() {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre del Diseño</label>
                             <input 
                                 type="text" 
-                                className="w-full mt-2 bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-slate-900 outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all"
+                                className="w-full mt-2 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-5 py-4 font-bold text-slate-900 dark:text-white outline-none ring-2 ring-transparent focus:ring-blue-600 transition-all"
                                 placeholder="Ej: Estadio Principal"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -285,7 +285,7 @@ export default function VenueDesigner() {
                                                                     type="number" 
                                                                     value={block.rows}
                                                                     onChange={(e) => updateBlock(selectedZone, i, 'rows', parseInt(e.target.value) || 0)}
-                                                                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 outline-none focus:border-blue-600 shadow-sm transition-colors text-center"
+                                                                    className="w-full bg-white dark:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:border-blue-600 shadow-sm transition-colors text-center text-slate-900 dark:text-white"
                                                                 />
                                                             </div>
                                                             <div className="space-y-1">
@@ -294,7 +294,7 @@ export default function VenueDesigner() {
                                                                     type="number" 
                                                                     value={block.seatsPerRow}
                                                                     onChange={(e) => updateBlock(selectedZone, i, 'seatsPerRow', parseInt(e.target.value) || 0)}
-                                                                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 outline-none focus:border-blue-600 shadow-sm transition-colors text-center"
+                                                                    className="w-full bg-white dark:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-600 outline-none focus:border-blue-600 shadow-sm transition-colors text-center text-slate-900 dark:text-white"
                                                                 />
                                                             </div>
                                                         </div>
@@ -319,7 +319,7 @@ export default function VenueDesigner() {
                                             <input 
                                                 type="number" 
                                                 placeholder="Ej: 500"
-                                                className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 outline-none focus:border-blue-600 transition-all shadow-sm"
+                                                className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl px-6 py-4 text-xl font-black text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-all shadow-sm"
                                                 value={zones[selectedZone].maxCapacity || ""}
                                                 onChange={(e) => updateZone(selectedZone, { maxCapacity: parseInt(e.target.value) || 0 })}
                                             />

@@ -15,13 +15,13 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
     const getShapePath = () => {
         switch (shape) {
             case 'RECT_H':
-                return <rect x="30" y="80" width="540" height="440" rx="40" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <rect x="30" y="80" width="540" height="440" rx="40" className="fill-slate-700/30 stroke-slate-500 stroke-2" />;
             case 'RECT_V':
-                return <rect x="80" y="30" width="440" height="540" rx="40" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <rect x="80" y="30" width="440" height="540" rx="40" className="fill-slate-700/30 stroke-slate-500 stroke-2" />;
             case 'OVAL':
-                return <ellipse cx="300" cy="300" rx="270" ry="250" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <ellipse cx="300" cy="300" rx="270" ry="250" className="fill-slate-700/30 stroke-slate-500 stroke-2" />;
             case 'SEMICIRCLE':
-                return <path d="M 30 500 A 270 270 0 0 1 570 500 L 570 500 L 30 500 Z" className="fill-slate-800/80 stroke-slate-700 stroke-2" />;
+                return <path d="M 30 500 A 270 270 0 0 1 570 500 L 570 500 L 30 500 Z" className="fill-slate-700/30 stroke-slate-500 stroke-2" />;
             default:
                 return null;
         }
@@ -111,7 +111,7 @@ export default function VenuePreview({ shape, zones, onZoneClick, highlightZone 
         }
     });
 
-    const seatSize = Math.max(2.0, globalSpacing * 0.8);
+    const seatSize = Math.max(4.0, globalSpacing * 1.2);
 
     const renderMiniSeats = (blocks: any[], cx: number, cy: number, active: boolean, isRotated: boolean = false) => {
         if (!blocks || blocks.length === 0) return null;
